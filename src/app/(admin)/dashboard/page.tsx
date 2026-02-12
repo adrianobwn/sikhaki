@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { AREAS, SHIFTS } from "@/constants/areas";
 import SummaryCards from "@/components/admin/SummaryCards";
@@ -102,6 +102,17 @@ export default function DashboardPage() {
   const [tableData] = useState<ReportDetail[]>(MOCK_TABLE_DATA);
   const [selectedReport, setSelectedReport] = useState<ReportDetail | null>(null);
   const [kendalaPopup, setKendalaPopup] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (kendalaPopup) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [kendalaPopup]);
 
   const handleSearch = () => {
     console.log("🔍 Filter:", filters);
