@@ -43,6 +43,7 @@ export default function GarbageSection({ data, onChange }: GarbageSectionProps) 
               type="number" 
               inputMode="decimal"
               step="0.1"
+              min="0"
               value={data.infeksius || ''}
               onChange={(e) => update('infeksius', parseFloat(e.target.value) || 0)}
               placeholder="0.0"
@@ -72,6 +73,7 @@ export default function GarbageSection({ data, onChange }: GarbageSectionProps) 
               type="number" 
               inputMode="decimal"
               step="0.1"
+              min="0"
               value={data.anorganik || ''}
               onChange={(e) => update('anorganik', parseFloat(e.target.value) || 0)}
               placeholder="0.0"

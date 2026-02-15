@@ -36,6 +36,25 @@ export default function Stepper({
     onChange(next);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    // Allow empty input for easier editing
+    if (val === "") {
+      onChange(0);
+      return;
+    }
+    // Parse as integer and remove leading zeros
+    const num = parseInt(val, 10);
+    if (!isNaN(num)) {
+      onChange(Math.max(min, Math.min(max, num)));
+    }
+  };
+
+  const handleBlur = () => {
+    // Force re-render to remove leading zeros on blur
+    onChange(Math.max(min, Math.min(max, value)));
+  };
+
   const colorStyles = {
     slate: "bg-white border-slate-200 text-slate-800 ring-slate-200",
     red: "bg-red-50 border-red-200 text-red-900 ring-red-200",
@@ -79,9 +98,16 @@ export default function Stepper({
         >
           <Minus size={16} strokeWidth={2.5} />
         </button>
-        <div className="w-8 text-center font-bold text-lg tabular-nums">
-          {value}
-        </div>
+        <input
+          type="number"
+          inputMode="numeric"
+          min={min}
+          max={max}
+          value={value}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          className="w-16 text-center font-bold text-lg tabular-nums bg-white border border-slate-300 rounded-lg py-1 px-2 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        />
         <button
           type="button"
           onClick={increment}

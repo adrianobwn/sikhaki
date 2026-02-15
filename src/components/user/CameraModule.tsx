@@ -35,6 +35,13 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
   const startCamera = useCallback(async () => {
     try {
       setError(null);
+      
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError("Browser Anda tidak mendukung akses kamera. Gunakan browser modern seperti Chrome atau Safari.");
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } },
         audio: false,
@@ -42,8 +49,23 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
       streamRef.current = stream;
       // Set streaming first so video element renders, then useEffect attaches stream
       setStreaming(true);
-    } catch {
-      setError("Kamera selfie tidak dapat diakses. Pastikan izin kamera diberikan di pengaturan browser.");
+    } catch (err) {
+      console.error("Camera error:", err);
+      
+      // Provide specific error messages
+      if (err instanceof Error) {
+        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+          setError("Akses kamera ditolak. Klik ikon kunci/kamera di address bar browser, lalu izinkan akses kamera.");
+        } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+          setError("Kamera tidak ditemukan. Pastikan perangkat Anda memiliki kamera.");
+        } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+          setError("Kamera sedang digunakan aplikasi lain. Tutup aplikasi yang menggunakan kamera, lalu coba lagi.");
+        } else {
+          setError(`Error: ${err.message}. Coba refresh halaman atau gunakan browser lain.`);
+        }
+      } else {
+        setError("Kamera tidak dapat diakses. Pastikan izin kamera sudah diberikan dan tidak digunakan aplikasi lain.");
+      }
     }
   }, []);
 
@@ -78,9 +100,11 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="border border-red-200 bg-red-50 p-3 text-sm text-red-700 font-medium rounded-xl flex items-start gap-2">
-          <span className="shrink-0">⚠️</span>
-          <span>{error}</span>
+        <div className="border border-red-200 bg-red-50 p-4 rounded-xl space-y-3">
+          <div className="flex items-start gap-2 text-sm text-red-700 font-medium">
+            <span className="shrink-0">⚠️</span>
+            <span>{error}</span>
+          </div>
         </div>
       )}
 

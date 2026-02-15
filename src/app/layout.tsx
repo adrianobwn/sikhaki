@@ -15,6 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SIKHAKI — Sistem Harian Kebersihan",
   description: "Sistem manajemen laporan harian petugas kebersihan SIKHAKI",
+  icons: {
+    icon: "/Logo-RSUI.png",
+    apple: "/Logo-RSUI.png",
+  },
 };
 
 export default function RootLayout({

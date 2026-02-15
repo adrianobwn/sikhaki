@@ -9,7 +9,9 @@ import CleanlinessSection from "@/components/user/CleanlinessSection";
 import GarbageSection from "@/components/user/GarbageSection";
 import LogisticsSection from "@/components/user/LogisticsSection";
 import CameraModule from "@/components/user/CameraModule";
-import { User, Sparkles, Trash2, Package, CheckCircle2, AlertCircle, Camera } from "lucide-react";
+import { User, Sparkles, Trash2, Package, CheckCircle2, AlertCircle, Camera, Loader2 } from "lucide-react";
+import { uploadFoto, insertLaporan } from "@/lib/supabase";
+import { AREAS } from "@/constants/areas";
 
 interface FormData {
   identity: { nama: string; area: string; shift: string };
@@ -52,14 +54,79 @@ function getFormattedDate(): string {
 export default function LaporPage() {
   const [form, setForm] = useState<FormData>(initialForm);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const canSubmit = !!form.validation.foto && !!form.identity.nama && !!form.identity.area && !!form.identity.shift;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
-    console.log("Submitted:", form);
-    setSubmitted(true);
+    if (!canSubmit || loading) return;
+    
+    setLoading(true);
+    setError(null);
+
+    try {
+      // 1. Upload foto ke Supabase Storage
+      let fotoUrl: string | null = null;
+      if (form.validation.foto) {
+        fotoUrl = await uploadFoto(form.validation.foto);
+        if (!fotoUrl) {
+          throw new Error("Gagal upload foto. Coba lagi.");
+        }
+      }
+
+      // 2. Get area_id from area (area is stored as string ID)
+      const areaId = parseInt(form.identity.area);
+      const selectedArea = AREAS.find(a => a.id === areaId);
+      if (!selectedArea) {
+        throw new Error("Area tidak valid.");
+      }
+
+      // 3. Get current date and time
+      const now = new Date();
+      const waktu = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const tanggal = now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+      // 4. Prepare data for insert
+      const laporanData = {
+        waktu,
+        tanggal,
+        petugas: form.identity.nama,
+        area_id: selectedArea.id,
+        area_nama: selectedArea.name,
+        shift: form.identity.shift,
+        sudah_dibersihkan: form.cleanliness.sudahDibersihkan || "",
+        belum_dibersihkan: form.cleanliness.belumDibersihkan || "",
+        sampah_infeksius: form.garbage.infeksius,
+        sampah_anorganik: form.garbage.anorganik,
+        sampah_safety_box: form.garbage.safetyBox,
+        sampah_kardus: form.garbage.kardus,
+        logistik_kuning_90: form.logistics.plastikKuning90,
+        logistik_kuning_60: form.logistics.plastikKuning60,
+        logistik_kuning_40: form.logistics.plastikKuning40,
+        logistik_hitam_90: form.logistics.plastikHitam90,
+        logistik_hitam_60: form.logistics.plastikHitam60,
+        logistik_hitam_40: form.logistics.plastikHitam40,
+        logistik_ungu: form.logistics.plastikUngu,
+        logistik_coklat: form.logistics.plastikCoklat,
+        logistik_safety_box: form.logistics.safetyBox,
+        logistik_hand_towel: form.logistics.handTowel,
+        kendala: form.validation.kendala || "",
+        foto_url: fotoUrl || "",
+      };
+
+      // 5. Insert to database
+      await insertLaporan(laporanData);
+
+      // 6. Success
+      setSubmitted(true);
+    } catch (err) {
+      console.error("Submit error:", err);
+      setError(err instanceof Error ? err.message : "Gagal menyimpan laporan. Coba lagi.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (submitted) {
@@ -204,15 +271,26 @@ export default function LaporPage() {
 
       {/* Floating Submit Action */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 p-4 z-40 safe-area-pb">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md mx-auto space-y-2">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 flex items-start gap-2">
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
           <Button 
             type="submit" 
             fullWidth 
-            disabled={!canSubmit} 
-            className="bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/20 py-3.5 text-base"
+            disabled={!canSubmit || loading} 
+            className="bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/20 py-3.5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleSubmit} 
           >
-            {canSubmit ? "Kirim Laporan" : "Lengkapi Data & Foto"}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 size={18} className="animate-spin" />
+                Menyimpan...
+              </span>
+            ) : canSubmit ? "Kirim Laporan" : "Lengkapi Data & Foto"}
           </Button>
         </div>
       </div>
