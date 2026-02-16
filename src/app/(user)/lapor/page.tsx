@@ -252,10 +252,13 @@ export default function LaporPage() {
                   onChange={(e) =>
                     setForm({ ...form, validation: { ...form.validation, kendala: e.target.value } })
                   }
-                  placeholder="Ada kendala di lapangan?"
+                  placeholder="Tulis kendala jika ada. Jika tidak ada masalah, kosongkan saja."
                   rows={3}
                   className="w-full border border-slate-300 rounded-xl p-3 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-shadow"
                 />
+                <p className="text-xs text-slate-500 mt-2">
+                  💡 <strong>Tips:</strong> Kosongkan jika tidak ada kendala atau masalah di lapangan.
+                </p>
               </div>
 
               <CameraModule

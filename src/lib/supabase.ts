@@ -224,15 +224,17 @@ export async function getActivityChartData(tanggal: string) {
   }
   
   // Group by shift
-  const groupedByShift: Record<string, { laporan: number; selesai: number }> = {};
+  const groupedByShift: Record<string, { laporan: number; selesai: number; kendala: number }> = {};
   
   data.forEach((item) => {
     if (!groupedByShift[item.shift]) {
-      groupedByShift[item.shift] = { laporan: 0, selesai: 0 };
+      groupedByShift[item.shift] = { laporan: 0, selesai: 0, kendala: 0 };
     }
     groupedByShift[item.shift].laporan += 1;
     if (item.status === 'selesai') {
       groupedByShift[item.shift].selesai += 1;
+    } else if (item.status === 'kendala') {
+      groupedByShift[item.shift].kendala += 1;
     }
   });
   

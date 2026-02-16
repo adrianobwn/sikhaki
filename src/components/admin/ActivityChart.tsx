@@ -17,6 +17,7 @@ interface ChartDataItem {
   shift: string;
   laporan: number;
   selesai: number;
+  kendala: number;
 }
 
 interface ActivityChartProps {
@@ -61,7 +62,8 @@ export default function ActivityChart({ data }: ActivityChartProps) {
               iconType="circle"
             />
             <Bar dataKey="laporan" fill="#6366f1" name="Total Laporan" radius={[6, 6, 0, 0]} />
-            <Bar dataKey="selesai" fill="#a5b4fc" name="Selesai" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="selesai" fill="#10b981" name="Selesai" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="kendala" fill="#ef4444" name="Kendala" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
