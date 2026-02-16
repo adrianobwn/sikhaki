@@ -1,16 +1,36 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Lock, Eye, EyeOff, ShieldCheck, AlertCircle } from "lucide-react";
+import { Lock, Eye, EyeOff, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
 
 const ADMIN_PASSWORD = "rsui2026";
 
 export default function AdminGate({ children }: { children: React.ReactNode }) {
   const [authenticated, setAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem("sikhaki_admin_auth");
+    if (saved === "true") {
+      setAuthenticated(true);
+    }
+    setLoading(false);
+
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        const stillAuth = sessionStorage.getItem("sikhaki_admin_auth");
+        if (stillAuth !== "true") {
+          setAuthenticated(false);
+        }
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,11 +38,18 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
 
     if (password === ADMIN_PASSWORD) {
       setAuthenticated(true);
+      sessionStorage.setItem("sikhaki_admin_auth", "true");
     } else {
       setError("Password salah. Hubungi supervisor untuk akses.");
       setPassword("");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/20" />
+    );
+  }
 
   if (authenticated) {
     return (

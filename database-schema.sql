@@ -149,3 +149,58 @@ EXECUTE FUNCTION set_status_from_kendala();
 -- FROM laporan
 -- WHERE tanggal = CURRENT_DATE
 -- ORDER BY created_at DESC;
+
+-- ============================================
+-- TABEL: stok_barang
+-- ============================================
+-- Setiap row = 1 record stok/pengambilan barang pada tanggal tertentu.
+-- Admin menginput stok awal dan pengambilan.
+-- Stok akhir dihitung di client: stok_awal - SUM(pengambilan)
+
+CREATE TABLE IF NOT EXISTS stok_barang (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  -- Nama Barang (sesuai daftar master)
+  nama_barang TEXT NOT NULL,
+  
+  -- Stok Awal (jumlah awal sebelum pengambilan pada periode ini)
+  stok_awal INTEGER NOT NULL DEFAULT 0 CHECK (stok_awal >= 0),
+  
+  -- Jumlah Pengambilan pada tanggal ini
+  pengambilan INTEGER NOT NULL DEFAULT 0 CHECK (pengambilan >= 0),
+  
+  -- Tanggal pengambilan
+  tanggal DATE NOT NULL DEFAULT CURRENT_DATE,
+  
+  -- Keterangan (optional)
+  keterangan TEXT
+);
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_stok_barang_nama ON stok_barang(nama_barang);
+CREATE INDEX IF NOT EXISTS idx_stok_barang_tanggal ON stok_barang(tanggal DESC);
+
+-- RLS Policies
+ALTER TABLE stok_barang ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public insert stok"
+ON stok_barang FOR INSERT
+TO public
+WITH CHECK (true);
+
+CREATE POLICY "Allow public read stok"
+ON stok_barang FOR SELECT
+TO public
+USING (true);
+
+CREATE POLICY "Allow public update stok"
+ON stok_barang FOR UPDATE
+TO public
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow public delete stok"
+ON stok_barang FOR DELETE
+TO public
+USING (true);

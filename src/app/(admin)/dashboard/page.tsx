@@ -6,19 +6,20 @@ import { AREAS, SHIFTS } from "@/constants/areas";
 import SummaryCards from "@/components/admin/SummaryCards";
 import ActivityChart from "@/components/admin/ActivityChart";
 import GarbagePieChart from "@/components/admin/GarbagePieChart";
+
 import DataTable from "@/components/admin/DataTable";
 import ReportDetailModal, { ReportDetail } from "@/components/admin/ReportDetailModal";
-import { Search, Calendar, Filter, Users, ClipboardList, CheckCircle2, Trash2, AlertTriangle, ChevronDown, LogOut, Download, Loader2 } from "lucide-react";
+import { Search, Calendar, Filter, Users, ClipboardList, CheckCircle2, Trash2, AlertTriangle, ChevronDown, LogOut, Download, Loader2, ArrowLeft } from "lucide-react";
 import { fetchLaporan, getDashboardStats, getActivityChartData, getGarbagePieData, type LaporanRow } from "@/lib/supabase";
 import * as XLSX from 'xlsx';
 
 function getFormattedDate(): string {
   const now = new Date();
-  const options: Intl.DateTimeFormatOptions = { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   };
   return now.toLocaleDateString('id-ID', options);
 }
@@ -71,6 +72,7 @@ export default function DashboardPage() {
   const [chartData, setChartData] = useState<Array<{ shift: string; laporan: number; selesai: number; kendala: number }>>([]);
   const [stats, setStats] = useState({ totalLaporan: 0, areaSelesai: 0, totalSampah: 0, totalKendala: 0 });
   const [garbageData, setGarbageData] = useState({ infeksius: 0, anorganik: 0, safetyBox: 0, kardus: 0 });
+
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<ReportDetail | null>(null);
   const [kendalaPopup, setKendalaPopup] = useState<string | null>(null);
@@ -88,7 +90,7 @@ export default function DashboardPage() {
         ]);
 
         setTableData(reports.map(convertToReportDetail));
-        setStats(statsData);
+        setStats(statsData ?? { totalLaporan: 0, areaSelesai: 0, totalSampah: 0, totalKendala: 0 });
         setChartData(activityData);
         setGarbageData(pieData);
       } catch (error) {
@@ -123,7 +125,8 @@ export default function DashboardPage() {
   };
 
   const handleLogout = () => {
-    window.location.reload();
+    sessionStorage.removeItem("sikhaki_admin_auth");
+    window.location.replace("/");
   };
 
   const handleExport = () => {
@@ -131,7 +134,7 @@ export default function DashboardPage() {
       alert("Tidak ada data untuk diekspor");
       return;
     }
-    
+
     // Prepare data for Excel
     const excelData = tableData.map((r) => ({
       "ID": r.id,
@@ -208,10 +211,10 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 relative bg-white rounded-xl p-1 shadow-sm">
-              <Image 
-                src="/Logo-RSUI.png" 
-                alt="Logo RSUI" 
-                fill 
+              <Image
+                src="/Logo-RSUI.png"
+                alt="Logo RSUI"
+                fill
                 className="object-contain p-0.5"
                 priority
               />
@@ -222,13 +225,14 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-xs font-semibold text-indigo-200 hidden md:block">{getFormattedDate()}</span>
+            <span className="text-xs font-semibold text-white hidden md:block">{getFormattedDate()}</span>
+
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-2 text-indigo-200 hover:text-white hover:bg-red-500/30 rounded-xl transition-colors text-sm font-semibold"
+              className="flex items-center gap-2 px-3 py-2 text-white hover:bg-red-500/30 rounded-xl transition-colors text-sm font-semibold"
             >
               <LogOut size={18} />
-              <span className="hidden sm:inline">Logout</span>
+              <span className="hidden sm:inline">Keluar</span>
             </button>
           </div>
         </div>
@@ -263,6 +267,8 @@ export default function DashboardPage() {
               <GarbagePieChart data={garbageData} />
             </div>
 
+
+
             {/* Data Table Section with Filter inside */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
               {/* Table Header */}
@@ -284,89 +290,89 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-          {/* Filter Bar inside table section */}
-          <div className="px-6 py-4 bg-slate-50/80 border-b border-slate-100">
-            <div className="flex items-center gap-2 mb-3">
-              <Filter size={14} className="text-indigo-500" />
-              <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Filter</h4>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5">
-                  <Calendar size={12} />
-                  Tanggal
-                </label>
-                <input
-                  type="date"
-                  value={filters.tanggal}
-                  onChange={(e) => setFilters({ ...filters, tanggal: e.target.value })}
-                  className="w-full border border-slate-200 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow bg-white"
-                />
+              {/* Filter Bar inside table section */}
+              <div className="px-6 py-4 bg-slate-50/80 border-b border-slate-100">
+                <div className="flex items-center gap-2 mb-3">
+                  <Filter size={14} className="text-indigo-500" />
+                  <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Filter</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5">
+                      <Calendar size={12} />
+                      Tanggal
+                    </label>
+                    <input
+                      type="date"
+                      value={filters.tanggal}
+                      onChange={(e) => setFilters({ ...filters, tanggal: e.target.value })}
+                      className="w-full border border-slate-200 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5">
+                      <ChevronDown size={12} />
+                      Shift
+                    </label>
+                    <select
+                      value={filters.shift}
+                      onChange={(e) => setFilters({ ...filters, shift: e.target.value })}
+                      className="w-full border border-slate-200 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
+                    >
+                      <option value="">Semua Shift</option>
+                      {SHIFTS.map((s) => (
+                        <option key={s.code} value={s.code}>
+                          {s.code} — {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5">
+                      <ChevronDown size={12} />
+                      Area
+                    </label>
+                    <select
+                      value={filters.area}
+                      onChange={(e) => setFilters({ ...filters, area: e.target.value })}
+                      className="w-full border border-slate-200 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
+                    >
+                      <option value="">Semua Area</option>
+                      {AREAS.map((a) => (
+                        <option key={a.id} value={String(a.id)}>
+                          {a.id}. {a.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5">
+                      <Users size={12} />
+                      Petugas
+                    </label>
+                    <input
+                      type="text"
+                      value={filters.petugas}
+                      onChange={(e) => setFilters({ ...filters, petugas: e.target.value })}
+                      placeholder="Cari nama..."
+                      className="w-full border border-slate-200 rounded-xl p-2.5 text-sm font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+                    />
+                  </div>
+                  <div>
+                    <button
+                      onClick={handleSearch}
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl p-2.5 text-sm font-bold flex items-center justify-center gap-2 transition-colors shadow-sm shadow-indigo-500/20 active:scale-[0.98]"
+                    >
+                      <Search size={16} />
+                      Cari
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5">
-                  <ChevronDown size={12} />
-                  Shift
-                </label>
-                <select
-                  value={filters.shift}
-                  onChange={(e) => setFilters({ ...filters, shift: e.target.value })}
-                  className="w-full border border-slate-200 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
-                >
-                  <option value="">Semua Shift</option>
-                  {SHIFTS.map((s) => (
-                    <option key={s.code} value={s.code}>
-                      {s.code} — {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5">
-                  <ChevronDown size={12} />
-                  Area
-                </label>
-                <select
-                  value={filters.area}
-                  onChange={(e) => setFilters({ ...filters, area: e.target.value })}
-                  className="w-full border border-slate-200 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
-                >
-                  <option value="">Semua Area</option>
-                  {AREAS.map((a) => (
-                    <option key={a.id} value={String(a.id)}>
-                      {a.id}. {a.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5">
-                  <Users size={12} />
-                  Petugas
-                </label>
-                <input
-                  type="text"
-                  value={filters.petugas}
-                  onChange={(e) => setFilters({ ...filters, petugas: e.target.value })}
-                  placeholder="Cari nama..."
-                  className="w-full border border-slate-200 rounded-xl p-2.5 text-sm font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
-                />
-              </div>
-              <div>
-                <button
-                  onClick={handleSearch}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl p-2.5 text-sm font-bold flex items-center justify-center gap-2 transition-colors shadow-sm shadow-indigo-500/20 active:scale-[0.98]"
-                >
-                  <Search size={16} />
-                  Cari
-                </button>
-              </div>
-            </div>
-          </div>
 
-          {/* Table */}
-          <DataTable data={tableData} onView={handleView} onKendalaClick={(text) => setKendalaPopup(text)} />
-        </div>
+              {/* Table */}
+              <DataTable data={tableData} onView={handleView} onKendalaClick={(text) => setKendalaPopup(text)} />
+            </div>
           </>
         )}
       </main>

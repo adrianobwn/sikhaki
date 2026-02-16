@@ -86,11 +86,11 @@ export async function uploadFoto(base64Data: string, fileName?: string): Promise
     // Convert base64 to Blob
     const base64Response = await fetch(base64Data);
     const blob = await base64Response.blob();
-    
+
     // Generate unique filename
     const timestamp = Date.now();
     const finalFileName = fileName || `absen-${timestamp}.jpg`;
-    
+
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
       .from('foto-absen')
@@ -98,17 +98,17 @@ export async function uploadFoto(base64Data: string, fileName?: string): Promise
         contentType: 'image/jpeg',
         upsert: false,
       });
-    
+
     if (error) {
       console.error('Error uploading foto:', error);
       return null;
     }
-    
+
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from('foto-absen')
       .getPublicUrl(data.path);
-    
+
     return publicUrl;
   } catch (error) {
     console.error('Error in uploadFoto:', error);
@@ -125,12 +125,12 @@ export async function insertLaporan(data: LaporanInsert) {
     .insert([data])
     .select()
     .single();
-  
+
   if (error) {
     console.error('Error inserting laporan:', error);
     throw error;
   }
-  
+
   return result;
 }
 
@@ -147,30 +147,30 @@ export async function fetchLaporan(filters?: {
     .from('laporan')
     .select('*')
     .order('created_at', { ascending: false });
-  
+
   if (filters?.tanggal) {
     query = query.eq('tanggal', filters.tanggal);
   }
-  
+
   if (filters?.shift) {
     query = query.eq('shift', filters.shift);
   }
-  
+
   if (filters?.area) {
     query = query.eq('area_id', parseInt(filters.area));
   }
-  
+
   if (filters?.petugas) {
     query = query.ilike('petugas', `%${filters.petugas}%`);
   }
-  
+
   const { data, error } = await query;
-  
+
   if (error) {
     console.error('Error fetching laporan:', error);
     throw error;
   }
-  
+
   return data as LaporanRow[];
 }
 
@@ -182,12 +182,12 @@ export async function getDashboardStats(tanggal: string) {
     .from('laporan')
     .select('*')
     .eq('tanggal', tanggal);
-  
+
   if (error) {
     console.error('Error fetching stats:', error);
     return null;
   }
-  
+
   const totalLaporan = data.length;
   const areaSelesai = data.filter((r) => r.status === 'selesai').length;
   const totalSampah = data.reduce(
@@ -200,7 +200,7 @@ export async function getDashboardStats(tanggal: string) {
     0
   );
   const totalKendala = data.filter((r) => r.kendala).length;
-  
+
   return {
     totalLaporan,
     areaSelesai,
@@ -217,15 +217,15 @@ export async function getActivityChartData(tanggal: string) {
     .from('laporan')
     .select('shift, status')
     .eq('tanggal', tanggal);
-  
+
   if (error) {
     console.error('Error fetching activity chart:', error);
     return [];
   }
-  
+
   // Group by shift
   const groupedByShift: Record<string, { laporan: number; selesai: number; kendala: number }> = {};
-  
+
   data.forEach((item) => {
     if (!groupedByShift[item.shift]) {
       groupedByShift[item.shift] = { laporan: 0, selesai: 0, kendala: 0 };
@@ -237,7 +237,7 @@ export async function getActivityChartData(tanggal: string) {
       groupedByShift[item.shift].kendala += 1;
     }
   });
-  
+
   return Object.entries(groupedByShift).map(([shift, counts]) => ({
     shift,
     ...counts,
@@ -252,7 +252,7 @@ export async function getGarbagePieData(tanggal: string) {
     .from('laporan')
     .select('sampah_infeksius, sampah_anorganik, sampah_safety_box, sampah_kardus')
     .eq('tanggal', tanggal);
-  
+
   if (error) {
     console.error('Error fetching garbage pie:', error);
     return {
@@ -262,7 +262,7 @@ export async function getGarbagePieData(tanggal: string) {
       kardus: 0,
     };
   }
-  
+
   const aggregate = data.reduce(
     (acc, row) => ({
       infeksius: acc.infeksius + row.sampah_infeksius,
@@ -272,11 +272,150 @@ export async function getGarbagePieData(tanggal: string) {
     }),
     { infeksius: 0, anorganik: 0, safetyBox: 0, kardus: 0 }
   );
-  
+
   return {
     infeksius: parseFloat(aggregate.infeksius.toFixed(1)),
     anorganik: parseFloat(aggregate.anorganik.toFixed(1)),
     safetyBox: parseFloat(aggregate.safetyBox.toFixed(1)),
     kardus: parseFloat(aggregate.kardus.toFixed(1)),
   };
+}
+
+// ============================================
+// STOK BARANG — TYPES & OPERATIONS
+// ============================================
+
+export interface StokBarangRow {
+  id: string;
+  created_at: string;
+  nama_barang: string;
+  stok_awal: number;
+  pengambilan: number;
+  tanggal: string;
+  keterangan: string | null;
+}
+
+export interface StokBarangInsert {
+  nama_barang: string;
+  stok_awal: number;
+  pengambilan: number;
+  tanggal: string;
+  keterangan?: string;
+}
+
+/**
+ * Insert record stok barang baru
+ */
+export async function insertStokBarang(data: StokBarangInsert) {
+  const { data: result, error } = await supabase
+    .from('stok_barang')
+    .insert([data])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error inserting stok barang:', error);
+    throw error;
+  }
+
+  return result;
+}
+
+/**
+ * Fetch data stok barang, optional filter by tanggal
+ */
+export async function fetchStokBarang(tanggal?: string) {
+  let query = supabase
+    .from('stok_barang')
+    .select('*')
+    .order('nama_barang', { ascending: true })
+    .order('tanggal', { ascending: false });
+
+  if (tanggal) {
+    query = query.eq('tanggal', tanggal);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching stok barang:', error);
+    throw error;
+  }
+
+  return data as StokBarangRow[];
+}
+
+/**
+ * Update record stok barang
+ */
+export async function updateStokBarang(id: string, data: Partial<StokBarangInsert>) {
+  const { data: result, error } = await supabase
+    .from('stok_barang')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating stok barang:', error);
+    throw error;
+  }
+
+  return result;
+}
+
+/**
+ * Delete record stok barang
+ */
+export async function deleteStokBarang(id: string) {
+  const { error } = await supabase
+    .from('stok_barang')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting stok barang:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get time-series stok per nama barang (untuk grafik dashboard).
+ * Mengembalikan array per barang, masing-masing berisi array data per tanggal.
+ */
+export interface StokTimeSeriesItem {
+  nama_barang: string;
+  data: { tanggal: string; pengambilan: number }[];
+}
+
+export async function getStokTimeSeries(): Promise<StokTimeSeriesItem[]> {
+  const { data, error } = await supabase
+    .from('stok_barang')
+    .select('nama_barang, tanggal, pengambilan')
+    .order('tanggal', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching stok time series:', error);
+    return [];
+  }
+
+  const rows = data as { nama_barang: string; tanggal: string; pengambilan: number }[];
+
+  // Group by nama_barang
+  const grouped: Record<string, { tanggal: string; pengambilan: number }[]> = {};
+
+  rows.forEach((row) => {
+    if (!grouped[row.nama_barang]) {
+      grouped[row.nama_barang] = [];
+    }
+    grouped[row.nama_barang].push({
+      tanggal: row.tanggal,
+      pengambilan: row.pengambilan,
+    });
+  });
+
+  return Object.entries(grouped).map(([nama, data]) => ({
+    nama_barang: nama,
+    data,
+  }));
 }
