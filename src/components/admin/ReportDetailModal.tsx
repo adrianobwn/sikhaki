@@ -18,6 +18,7 @@ import {
 export interface ReportDetail {
   id: string;
   waktu: string;
+  tanggal?: string;
   petugas: string;
   area: string;
   shift: string;
@@ -77,27 +78,30 @@ export default function ReportDetailModal({ report, onClose }: ReportDetailModal
     report.sampah.safetyBox +
     report.sampah.kardus;
 
-  // Use current date for "Tanggal Laporan" display for this demo, 
-  // in real app this should probably come from report data if it spans multiple days
-  const tanggalLaporan = new Date().toLocaleDateString('id-ID', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+  // Use report date if available, otherwise fallback to current date
+  const reportDate = report.tanggal ? new Date(report.tanggal + 'T00:00:00') : new Date();
+  const tanggalLaporan = reportDate.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   });
+
+  // Short ID for display
+  const shortId = report.id.substring(0, 8).toUpperCase();
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        
+
         {/* Header Fixed */}
         <div className="bg-white border-b border-slate-100 p-5 flex items-start justify-between shrink-0 z-10">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h2 className="text-xl font-bold text-slate-800">Laporan #{report.id}</h2>
+              <h2 className="text-xl font-bold text-slate-800">Laporan <span className="font-mono text-indigo-600">#{shortId}</span></h2>
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border capitalize ${statusStyles[report.status]}`}>
                 {report.status}
               </span>
@@ -124,7 +128,7 @@ export default function ReportDetailModal({ report, onClose }: ReportDetailModal
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
-          
+
           {/* Identity Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <IdentityCard icon={<User size={18} />} label="Petugas" value={report.petugas} color="indigo" />
@@ -135,11 +139,11 @@ export default function ReportDetailModal({ report, onClose }: ReportDetailModal
           <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-8">
             {/* Left Column: Logistik & Sampah */}
             <div className="space-y-8">
-              
+
               {/* Logistik & Stok */}
               <section>
                 <SectionHeader icon={<Package size={18} className="text-blue-500" />} title="Logistik & Stok" />
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Plastik Kuning */}
                   <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-100">
@@ -197,31 +201,36 @@ export default function ReportDetailModal({ report, onClose }: ReportDetailModal
 
             {/* Right Column: Kebersihan & Kendala */}
             <div className="space-y-8">
-              
+
               {/* Kebersihan */}
               <section>
                 <SectionHeader icon={<Sparkles size={18} className="text-teal-500" />} title="Kebersihan Area" />
                 <div className="space-y-4">
-                  <CleanlinessStatus 
-                    type="sudah" 
-                    text={report.kebersihan.sudahDibersihkan} 
+                  <CleanlinessStatus
+                    type="sudah"
+                    text={report.kebersihan.sudahDibersihkan}
                   />
-                  <CleanlinessStatus 
-                    type="belum" 
-                    text={report.kebersihan.belumDibersihkan} 
+                  <CleanlinessStatus
+                    type="belum"
+                    text={report.kebersihan.belumDibersihkan}
                   />
                 </div>
               </section>
 
               {/* Kendala Bubble */}
               {report.kendala && (
-                <div className="bg-red-50 border border-red-100 rounded-xl p-5 flex gap-4 shadow-sm">
-                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
-                    <MessageSquare size={20} />
+                <div className="bg-gradient-to-br from-red-50 to-rose-50 border border-red-200/60 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center text-red-600 shrink-0 shadow-sm shadow-red-100">
+                      <MessageSquare size={16} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-red-700 uppercase tracking-wider">Kendala Lapangan</h4>
+                      <p className="text-[10px] text-red-400 font-medium">Dilaporkan pukul {report.waktu}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-red-700 uppercase mb-1.5">Kendala Lapangan</h4>
-                    <p className="text-sm text-slate-700 leading-relaxed font-medium">"{report.kendala}"</p>
+                  <div className="bg-white/60 rounded-xl p-3.5 border border-red-100">
+                    <p className="text-sm text-slate-700 leading-relaxed font-medium italic">&ldquo;{report.kendala}&rdquo;</p>
                   </div>
                 </div>
               )}
@@ -284,7 +293,7 @@ function IdentityCard({ icon, label, value, color }: { icon: React.ReactNode; la
     emerald: "bg-emerald-50/50 border-emerald-100 text-emerald-600",
     blue: "bg-blue-50/50 border-blue-100 text-blue-600",
   };
-  
+
   const iconColors: Record<string, string> = {
     indigo: "bg-indigo-100 text-indigo-600",
     emerald: "bg-emerald-100 text-emerald-600",
@@ -311,7 +320,7 @@ function GarbageItem({ label, value, color }: { label: string; value: number; co
     orange: "bg-orange-50 border-orange-200 text-orange-800",
     stone: "bg-stone-50 border-stone-200 text-stone-700",
   };
-  
+
   return (
     <div className={`border rounded-xl p-3 ${colors[color]} flex flex-col justify-between h-20`}>
       <span className="text-[10px] uppercase font-bold opacity-70 mb-1">{label}</span>
@@ -346,9 +355,8 @@ function CleanlinessStatus({ type, text }: { type: "sudah" | "belum"; text: stri
       <p className={`text-xs font-bold uppercase mb-1.5 ${isSudah ? "text-emerald-600" : "text-amber-600"}`}>
         {isSudah ? "Sudah Dibersihkan" : "Belum Dibersihkan"}
       </p>
-      <div className={`text-sm text-slate-700 p-3 rounded-lg border leading-relaxed ${
-        isSudah ? "bg-emerald-50/30 border-emerald-100" : "bg-amber-50/30 border-amber-100"
-      }`}>
+      <div className={`text-sm text-slate-700 p-3 rounded-lg border leading-relaxed ${isSudah ? "bg-emerald-50/30 border-emerald-100" : "bg-amber-50/30 border-amber-100"
+        }`}>
         {text && text !== "-" ? text : <span className="text-slate-400 italic">Tidak ada catatan</span>}
       </div>
     </div>

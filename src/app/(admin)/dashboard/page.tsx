@@ -29,6 +29,7 @@ function convertToReportDetail(row: LaporanRow): ReportDetail {
   return {
     id: row.id,
     waktu: row.waktu,
+    tanggal: row.tanggal,
     petugas: row.petugas,
     area: row.area_nama,
     shift: row.shift,
@@ -383,20 +384,32 @@ export default function DashboardPage() {
       {/* Kendala Popup */}
       {kendalaPopup && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setKendalaPopup(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <AlertTriangle size={16} className="text-red-600" />
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="bg-gradient-to-r from-red-500 to-rose-500 px-6 py-4 flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <AlertTriangle size={20} className="text-white" />
               </div>
-              <h3 className="text-sm font-bold text-slate-800">Detail Kendala</h3>
+              <div>
+                <h3 className="text-sm font-bold text-white">Detail Kendala</h3>
+                <p className="text-xs text-red-100">Catatan kendala di lapangan</p>
+              </div>
             </div>
-            <p className="text-sm text-slate-700 leading-relaxed">{kendalaPopup}</p>
-            <button
-              onClick={() => setKendalaPopup(null)}
-              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-sm transition-colors"
-            >
-              Tutup
-            </button>
+            {/* Body */}
+            <div className="px-6 py-5">
+              <div className="bg-red-50/50 border border-red-100 rounded-xl p-4">
+                <p className="text-sm text-slate-700 leading-relaxed font-medium">{kendalaPopup}</p>
+              </div>
+            </div>
+            {/* Footer */}
+            <div className="px-6 pb-5">
+              <button
+                onClick={() => setKendalaPopup(null)}
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-sm transition-colors active:scale-[0.98]"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}

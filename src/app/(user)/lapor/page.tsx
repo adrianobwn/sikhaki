@@ -17,7 +17,7 @@ interface FormData {
   identity: { nama: string; area: string; shift: string };
   cleanliness: { sudahDibersihkan: string; belumDibersihkan: string };
   garbage: { infeksius: number; anorganik: number; safetyBox: number; kardus: number };
-  logistics: { 
+  logistics: {
     plastikKuning90: number; plastikKuning60: number; plastikKuning40: number;
     plastikHitam90: number; plastikHitam60: number; plastikHitam40: number;
     plastikUngu: number;
@@ -32,7 +32,7 @@ const initialForm: FormData = {
   identity: { nama: "", area: "", shift: "" },
   cleanliness: { sudahDibersihkan: "", belumDibersihkan: "" },
   garbage: { infeksius: 0, anorganik: 0, safetyBox: 0, kardus: 0 },
-  logistics: { 
+  logistics: {
     plastikKuning90: 0, plastikKuning60: 0, plastikKuning40: 0,
     plastikHitam90: 0, plastikHitam60: 0, plastikHitam40: 0,
     plastikUngu: 0, plastikCoklat: 0, safetyBox: 0, handTowel: 0,
@@ -42,11 +42,11 @@ const initialForm: FormData = {
 
 function getFormattedDate(): string {
   const now = new Date();
-  const options: Intl.DateTimeFormatOptions = { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   };
   return now.toLocaleDateString('id-ID', options);
 }
@@ -62,7 +62,7 @@ export default function LaporPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit || loading) return;
-    
+
     setLoading(true);
     setError(null);
 
@@ -165,10 +165,10 @@ export default function LaporPage() {
         <div className="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 relative">
-              <Image 
-                src="/Logo-RSUI.png" 
-                alt="Logo RSUI" 
-                fill 
+              <Image
+                src="/Logo-RSUI.png"
+                alt="Logo RSUI"
+                fill
                 className="object-contain"
                 priority
               />
@@ -186,12 +186,12 @@ export default function LaporPage() {
       </header>
 
       <main className="max-w-md mx-auto p-4 space-y-6 mt-2">
-        
+
         <form onSubmit={handleSubmit} className="space-y-5">
-          
+
           {/* Section 1: Identitas */}
-          <Card 
-            title="Identitas Petugas" 
+          <Card
+            title="Identitas Petugas"
             icon={<User size={18} />}
           >
             <IdentitySection
@@ -201,8 +201,8 @@ export default function LaporPage() {
           </Card>
 
           {/* Section 2: Kebersihan */}
-          <Card 
-            title="Laporan Kebersihan" 
+          <Card
+            title="Laporan Kebersihan"
             icon={<Sparkles size={18} />}
           >
             <CleanlinessSection
@@ -212,8 +212,8 @@ export default function LaporPage() {
           </Card>
 
           {/* Section 3: Sampah */}
-          <Card 
-            title="Volume Sampah (kg)" 
+          <Card
+            title="Volume Sampah (kg)"
             icon={<Trash2 size={18} />}
           >
             <div className="bg-orange-50 border border-orange-100 rounded-lg p-3 mb-4 flex gap-3 text-orange-800">
@@ -227,8 +227,8 @@ export default function LaporPage() {
           </Card>
 
           {/* Section 4: Logistik */}
-          <Card 
-            title="Stok Logistik" 
+          <Card
+            title="Stok Logistik"
             icon={<Package size={18} />}
           >
             <LogisticsSection
@@ -238,8 +238,8 @@ export default function LaporPage() {
           </Card>
 
           {/* Section 5: Absen Pulang */}
-          <Card 
-            title="Absen Pulang (Selfie)" 
+          <Card
+            title="Absen Pulang"
             icon={<Camera size={18} />}
           >
             <div className="space-y-4">
@@ -281,12 +281,12 @@ export default function LaporPage() {
               <span>{error}</span>
             </div>
           )}
-          <Button 
-            type="submit" 
-            fullWidth 
-            disabled={!canSubmit || loading} 
+          <Button
+            type="submit"
+            fullWidth
+            disabled={!canSubmit || loading}
             className="bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/20 py-3.5 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={handleSubmit} 
+            onClick={handleSubmit}
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">

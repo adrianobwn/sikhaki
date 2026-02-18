@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useCallback, useEffect } from "react";
-import { Camera, RefreshCw, X, UserCircle } from "lucide-react";
+import { Camera, RefreshCw, X } from "lucide-react";
 
 interface CameraModuleProps {
   photo: string | null;
@@ -13,13 +13,14 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const streamRef = useRef<MediaStream | null>(null);
 
   // Attach stream to video element once it's rendered
   useEffect(() => {
     if (streaming && videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
-      videoRef.current.play().catch(() => {});
+      videoRef.current.play().catch(() => { });
     }
   }, [streaming]);
 
@@ -32,10 +33,10 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
     };
   }, []);
 
-  const startCamera = useCallback(async () => {
+  const startCamera = useCallback(async (mode: "user" | "environment" = facingMode) => {
     try {
       setError(null);
-      
+
       // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setError("Browser Anda tidak mendukung akses kamera. Gunakan browser modern seperti Chrome atau Safari.");
@@ -43,7 +44,7 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } },
+        video: { facingMode: mode },
         audio: false,
       });
       streamRef.current = stream;
@@ -51,7 +52,7 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
       setStreaming(true);
     } catch (err) {
       console.error("Camera error:", err);
-      
+
       // Provide specific error messages
       if (err instanceof Error) {
         if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
@@ -67,7 +68,22 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
         setError("Kamera tidak dapat diakses. Pastikan izin kamera sudah diberikan dan tidak digunakan aplikasi lain.");
       }
     }
-  }, []);
+  }, [facingMode]);
+
+  const toggleCamera = async () => {
+    const newMode = facingMode === "user" ? "environment" : "user";
+    setFacingMode(newMode);
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+    }
+    setStreaming(false);
+
+    // Slight delay to ensure cleanup
+    setTimeout(() => {
+      startCamera(newMode);
+    }, 100);
+  };
 
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -78,8 +94,10 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext("2d");
     if (ctx) {
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
+      if (facingMode === "user") {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
       ctx.drawImage(video, 0, 0);
       const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
       onCapture(dataUrl);
@@ -90,7 +108,7 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
       streamRef.current = null;
     }
     setStreaming(false);
-  }, [onCapture]);
+  }, [onCapture, facingMode]);
 
   const retake = () => {
     onCapture("");
@@ -112,16 +130,16 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
       {!streaming && !photo && (
         <button
           type="button"
-          onClick={startCamera}
+          onClick={() => startCamera()}
           className="w-full border-2 border-dashed border-teal-300 bg-gradient-to-br from-teal-50 to-emerald-50 hover:from-teal-100 hover:to-emerald-100 rounded-2xl py-10 px-4 transition-all group active:scale-[0.98]"
         >
           <div className="flex flex-col items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-teal-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/30 group-hover:scale-110 transition-transform">
-              <UserCircle size={32} />
+              <Camera size={32} />
             </div>
             <div className="text-center">
-              <span className="font-bold text-teal-900 text-lg block">Selfie Absen Pulang</span>
-              <span className="text-sm text-teal-600">Tap untuk buka kamera depan</span>
+              <span className="font-bold text-teal-900 text-lg block">Foto Absen Pulang</span>
+              <span className="text-sm text-teal-600">Tap untuk buka kamera</span>
             </div>
           </div>
         </button>
@@ -131,14 +149,23 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
       {streaming && (
         <div className="space-y-4">
           {/* Camera Preview */}
-          <div className="rounded-2xl overflow-hidden shadow-xl border-2 border-slate-800 bg-black">
+          <div className="rounded-2xl overflow-hidden shadow-xl border-2 border-slate-800 bg-black relative">
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
-              className="w-full aspect-[3/4] object-cover transform -scale-x-100"
+              className={`w-full aspect-[3/4] object-cover ${facingMode === "user" ? "transform -scale-x-100" : ""}`}
             />
+
+            {/* Camera Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleCamera}
+              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 backdrop-blur-sm transition-all active:scale-95"
+            >
+              <RefreshCw size={20} />
+            </button>
           </div>
 
           {/* Capture Button - OUTSIDE the video container so always visible */}
@@ -151,7 +178,7 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
             Ambil Foto Sekarang
           </button>
 
-          <p className="text-center text-xs text-slate-500">Posisikan wajah di tengah frame, pastikan terlihat jelas</p>
+          <p className="text-center text-xs text-slate-500">Posisikan wajah/objek di tengah frame, pastikan terlihat jelas</p>
         </div>
       )}
 
@@ -159,7 +186,7 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
       {photo && (
         <div className="space-y-3">
           <div className="rounded-2xl overflow-hidden shadow-md border border-green-200 bg-slate-50 relative">
-            <img src={photo} alt="Selfie absen pulang" className="w-full" />
+            <img src={photo} alt="Foto absen pulang" className="w-full" />
             <button
               type="button"
               onClick={retake}
@@ -170,7 +197,7 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
             <div className="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/60 to-transparent">
               <div className="flex items-center justify-center gap-2 text-white text-sm font-semibold">
                 <span className="bg-green-400 w-2.5 h-2.5 rounded-full animate-pulse"></span>
-                Selfie berhasil diambil
+                Foto berhasil diambil
               </div>
             </div>
           </div>

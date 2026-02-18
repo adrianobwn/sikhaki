@@ -18,6 +18,7 @@ export default function StokBarangForm({ isOpen, onClose, onSuccess, editData }:
         stok_awal: 0,
         pengambilan: 0,
         tanggal: new Date().toISOString().split("T")[0],
+        satuan: "",
         keterangan: "",
     });
     const [loading, setLoading] = useState(false);
@@ -30,6 +31,7 @@ export default function StokBarangForm({ isOpen, onClose, onSuccess, editData }:
                 stok_awal: editData.stok_awal,
                 pengambilan: editData.pengambilan,
                 tanggal: editData.tanggal,
+                satuan: (editData as any).satuan || "",
                 keterangan: editData.keterangan || "",
             });
         } else {
@@ -38,6 +40,7 @@ export default function StokBarangForm({ isOpen, onClose, onSuccess, editData }:
                 stok_awal: 0,
                 pengambilan: 0,
                 tanggal: new Date().toISOString().split("T")[0],
+                satuan: "",
                 keterangan: "",
             });
         }
@@ -63,6 +66,7 @@ export default function StokBarangForm({ isOpen, onClose, onSuccess, editData }:
                     stok_awal: form.stok_awal,
                     pengambilan: form.pengambilan,
                     tanggal: form.tanggal,
+                    satuan: form.satuan || undefined,
                     keterangan: form.keterangan || undefined,
                 });
             } else {
@@ -71,6 +75,7 @@ export default function StokBarangForm({ isOpen, onClose, onSuccess, editData }:
                     stok_awal: form.stok_awal,
                     pengambilan: form.pengambilan,
                     tanggal: form.tanggal,
+                    satuan: form.satuan || undefined,
                     keterangan: form.keterangan || undefined,
                 });
             }
@@ -144,6 +149,20 @@ export default function StokBarangForm({ isOpen, onClose, onSuccess, editData }:
                                 </option>
                             ))}
                         </select>
+                    </div>
+
+                    {/* Satuan */}
+                    <div>
+                        <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-1.5">
+                            Satuan <span className="text-slate-400 font-normal">(opsional)</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={form.satuan}
+                            onChange={(e) => setForm({ ...form, satuan: e.target.value })}
+                            placeholder="Contoh: Pcs, Rim, Box"
+                            className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
+                        />
                     </div>
 
                     {/* Stok Awal & Pengambilan */}

@@ -292,6 +292,7 @@ export interface StokBarangRow {
   stok_awal: number;
   pengambilan: number;
   tanggal: string;
+  satuan: string | null;
   keterangan: string | null;
 }
 
@@ -300,6 +301,7 @@ export interface StokBarangInsert {
   stok_awal: number;
   pengambilan: number;
   tanggal: string;
+  satuan?: string;
   keterangan?: string;
 }
 
@@ -385,13 +387,14 @@ export async function deleteStokBarang(id: string) {
  */
 export interface StokTimeSeriesItem {
   nama_barang: string;
+  satuan: string;
   data: { tanggal: string; pengambilan: number }[];
 }
 
 export async function getStokTimeSeries(): Promise<StokTimeSeriesItem[]> {
   const { data, error } = await supabase
     .from('stok_barang')
-    .select('nama_barang, tanggal, pengambilan')
+    .select('nama_barang, satuan, tanggal, pengambilan')
     .order('tanggal', { ascending: true });
 
   if (error) {
@@ -399,23 +402,27 @@ export async function getStokTimeSeries(): Promise<StokTimeSeriesItem[]> {
     return [];
   }
 
-  const rows = data as { nama_barang: string; tanggal: string; pengambilan: number }[];
+  const rows = data as { nama_barang: string; satuan: string | null; tanggal: string; pengambilan: number }[];
 
   // Group by nama_barang
-  const grouped: Record<string, { tanggal: string; pengambilan: number }[]> = {};
+  const grouped: Record<string, { satuan: string; data: { tanggal: string; pengambilan: number }[] }> = {};
 
   rows.forEach((row) => {
     if (!grouped[row.nama_barang]) {
-      grouped[row.nama_barang] = [];
+      grouped[row.nama_barang] = {
+        satuan: row.satuan || '',
+        data: []
+      };
     }
-    grouped[row.nama_barang].push({
+    grouped[row.nama_barang].data.push({
       tanggal: row.tanggal,
       pengambilan: row.pengambilan,
     });
   });
 
-  return Object.entries(grouped).map(([nama, data]) => ({
+  return Object.entries(grouped).map(([nama, content]) => ({
     nama_barang: nama,
-    data,
+    satuan: content.satuan,
+    data: content.data,
   }));
 }

@@ -101,6 +101,7 @@ export default function GudangPage() {
                     </div>
                 </div>
 
+
                 {/* Stock Charts */}
                 <StockChart data={stokData} />
             </main>

@@ -1,175 +1,346 @@
--- Hapus data stok lama
+-- ============================================
+-- SIKHAKI DUMMY DATA
+-- Jalankan di Supabase SQL Editor
+-- ============================================
+
+-- ============================================
+-- MIGRATION: SATUAN untuk stok_barang
+-- ============================================
+ALTER TABLE stok_barang ADD COLUMN IF NOT EXISTS satuan TEXT;
+COMMENT ON COLUMN stok_barang.satuan IS 'Satuan barang (Pcs, Rim, Box, dll)';
+
+-- ============================================
+-- HAPUS DATA LAMA
+-- ============================================
 DELETE FROM stok_barang;
+DELETE FROM laporan;
 
 -- ============================================
--- DUMMY DATA: stok_barang - SEMUA 39 BARANG
--- 8 tanggal sampling: 29 Des 2025 - 29 Jan 2026
+-- DUMMY DATA: stok_barang (GUDANG)
+-- Periode: Januari - Februari 2026
 -- ============================================
-INSERT INTO stok_barang (nama_barang, stok_awal, pengambilan, tanggal) VALUES
--- === 29 Desember 2025 ===
-('Hitam 40',602,11,'2025-12-29'),('Hitam 60',297,116,'2025-12-29'),('Hitam 90',92,60,'2025-12-29'),
-('Kuning 40',20,0,'2025-12-29'),('Kuning 60',15,160,'2025-12-29'),('Kuning 90',280,63,'2025-12-29'),
-('Ungu 40',8,2,'2025-12-29'),('Ungu 60',60,5,'2025-12-29'),
-('Coklat 40',5,0,'2025-12-29'),('Coklat 60',70,7,'2025-12-29'),
-('Hand Towel',0,295,'2025-12-29'),('Hand Soap (Calmic)',30,8,'2025-12-29'),
-('Tisu Roll',0,3,'2025-12-29'),('Safety Box Jerigen 5 L',443,49,'2025-12-29'),
-('Safety Box Kontainer 5 L',50,5,'2025-12-29'),('Safety Box Kontainer 1 L',30,2,'2025-12-29'),
-('Floor Cleaner',20,3,'2025-12-29'),('Karbol',15,2,'2025-12-29'),
-('Bowl Getter',10,1,'2025-12-29'),('Detergent Boom',25,4,'2025-12-29'),
-('Pengharum Toilet/Stella',40,6,'2025-12-29'),('Tapas Hijau',335,15,'2025-12-29'),
-('Kuas',12,1,'2025-12-29'),('Kape',8,0,'2025-12-29'),
-('Sprayer',154,4,'2025-12-29'),('Nilon Broom',18,2,'2025-12-29'),
-('Broom set Dustpan mini',10,1,'2025-12-29'),('Lobby Duster',6,0,'2025-12-29'),
-('Tissue Facial (Wajah)',45,8,'2025-12-29'),('Refill Looby',12,1,'2025-12-29'),
-('Refill Mop Kuning',8,1,'2025-12-29'),('Refill Mop Merah',8,0,'2025-12-29'),
-('Refill Mop Hijau',8,1,'2025-12-29'),('Refill Mop Biru',8,0,'2025-12-29'),
-('Lap Micro Fiber Merah',20,3,'2025-12-29'),('Lap Micro Fiber Kuning',20,2,'2025-12-29'),
-('Lap Micro Fiber Hijau',20,4,'2025-12-29'),('Lap Micro Fiber Biru',20,3,'2025-12-29'),
-('Disinfektan H2O2',50,8,'2025-12-29'),
 
--- === 5 Januari 2026 ===
-('Hitam 40',590,3,'2026-01-05'),('Hitam 60',200,75,'2026-01-05'),('Hitam 90',70,23,'2026-01-05'),
-('Kuning 40',20,0,'2026-01-05'),('Kuning 60',10,0,'2026-01-05'),('Kuning 90',220,29,'2026-01-05'),
-('Ungu 40',6,0,'2026-01-05'),('Ungu 60',55,2,'2026-01-05'),
-('Coklat 40',5,0,'2026-01-05'),('Coklat 60',63,2,'2026-01-05'),
-('Hand Towel',200,147,'2026-01-05'),('Hand Soap (Calmic)',25,5,'2026-01-05'),
-('Tisu Roll',0,0,'2026-01-05'),('Safety Box Jerigen 5 L',400,45,'2026-01-05'),
-('Safety Box Kontainer 5 L',45,3,'2026-01-05'),('Safety Box Kontainer 1 L',28,1,'2026-01-05'),
-('Floor Cleaner',17,2,'2026-01-05'),('Karbol',13,1,'2026-01-05'),
-('Bowl Getter',9,0,'2026-01-05'),('Detergent Boom',21,3,'2026-01-05'),
-('Pengharum Toilet/Stella',34,5,'2026-01-05'),('Tapas Hijau',320,10,'2026-01-05'),
-('Kuas',11,0,'2026-01-05'),('Kape',8,1,'2026-01-05'),
-('Sprayer',150,3,'2026-01-05'),('Nilon Broom',16,1,'2026-01-05'),
-('Broom set Dustpan mini',9,0,'2026-01-05'),('Lobby Duster',6,1,'2026-01-05'),
-('Tissue Facial (Wajah)',37,6,'2026-01-05'),('Refill Looby',11,0,'2026-01-05'),
-('Refill Mop Kuning',7,1,'2026-01-05'),('Refill Mop Merah',8,1,'2026-01-05'),
-('Refill Mop Hijau',7,0,'2026-01-05'),('Refill Mop Biru',8,1,'2026-01-05'),
-('Lap Micro Fiber Merah',17,2,'2026-01-05'),('Lap Micro Fiber Kuning',18,1,'2026-01-05'),
-('Lap Micro Fiber Hijau',16,3,'2026-01-05'),('Lap Micro Fiber Biru',17,2,'2026-01-05'),
-('Disinfektan H2O2',42,6,'2026-01-05'),
+INSERT INTO stok_barang (nama_barang, satuan, stok_awal, pengambilan, tanggal) VALUES
+-- === PEKAN 1 JANUARI 2026 ===
+('Hitam 40', 'Pcs', 50, 5, '2026-01-05'),
+('Hitam 60', 'Pcs', 50, 8, '2026-01-05'),
+('Hitam 90', 'Pcs', 40, 3, '2026-01-05'),
+('Kuning 40', 'Pcs', 60, 10, '2026-01-06'),
+('Kuning 60', 'Pcs', 50, 7, '2026-01-06'),
+('Kuning 90', 'Pcs', 40, 5, '2026-01-06'),
+('Ungu 40', 'Pcs', 30, 2, '2026-01-07'),
 
--- === 12 Januari 2026 ===
-('Hitam 40',580,4,'2026-01-12'),('Hitam 60',150,88,'2026-01-12'),('Hitam 90',50,60,'2026-01-12'),
-('Kuning 40',20,0,'2026-01-12'),('Kuning 60',10,40,'2026-01-12'),('Kuning 90',190,51,'2026-01-12'),
-('Ungu 40',6,0,'2026-01-12'),('Ungu 60',50,0,'2026-01-12'),
-('Coklat 40',5,0,'2026-01-12'),('Coklat 60',60,0,'2026-01-12'),
-('Hand Towel',100,0,'2026-01-12'),('Hand Soap (Calmic)',20,35,'2026-01-12'),
-('Tisu Roll',0,0,'2026-01-12'),('Safety Box Jerigen 5 L',360,48,'2026-01-12'),
-('Safety Box Kontainer 5 L',42,4,'2026-01-12'),('Safety Box Kontainer 1 L',27,2,'2026-01-12'),
-('Floor Cleaner',15,4,'2026-01-12'),('Karbol',12,2,'2026-01-12'),
-('Bowl Getter',9,1,'2026-01-12'),('Detergent Boom',18,2,'2026-01-12'),
-('Pengharum Toilet/Stella',29,7,'2026-01-12'),('Tapas Hijau',310,12,'2026-01-12'),
-('Kuas',11,2,'2026-01-12'),('Kape',7,0,'2026-01-12'),
-('Sprayer',147,5,'2026-01-12'),('Nilon Broom',15,2,'2026-01-12'),
-('Broom set Dustpan mini',9,1,'2026-01-12'),('Lobby Duster',5,0,'2026-01-12'),
-('Tissue Facial (Wajah)',31,5,'2026-01-12'),('Refill Looby',11,1,'2026-01-12'),
-('Refill Mop Kuning',6,0,'2026-01-12'),('Refill Mop Merah',7,1,'2026-01-12'),
-('Refill Mop Hijau',7,1,'2026-01-12'),('Refill Mop Biru',7,0,'2026-01-12'),
-('Lap Micro Fiber Merah',15,1,'2026-01-12'),('Lap Micro Fiber Kuning',17,2,'2026-01-12'),
-('Lap Micro Fiber Hijau',13,2,'2026-01-12'),('Lap Micro Fiber Biru',15,1,'2026-01-12'),
-('Disinfektan H2O2',36,5,'2026-01-12'),
+-- === PEKAN 2 JANUARI 2026 ===
+('Ungu 60', 'Pcs', 30, 4, '2026-01-12'),
+('Coklat 40', 'Pcs', 25, 3, '2026-01-12'),
+('Coklat 60', 'Pcs', 25, 2, '2026-01-12'),
+('Hand Towel', 'Pack', 100, 15, '2026-01-13'),
+('Hand Soap (Calmic)', 'Botol', 20, 2, '2026-01-13'),
+('Tisu Roll', 'Roll', 200, 25, '2026-01-14'),
 
--- === 15 Januari 2026 ===
-('Hitam 40',575,0,'2026-01-15'),('Hitam 60',120,20,'2026-01-15'),('Hitam 90',40,32,'2026-01-15'),
-('Kuning 40',20,0,'2026-01-15'),('Kuning 60',10,0,'2026-01-15'),('Kuning 90',150,54,'2026-01-15'),
-('Ungu 40',6,0,'2026-01-15'),('Ungu 60',48,3,'2026-01-15'),
-('Coklat 40',5,0,'2026-01-15'),('Coklat 60',55,11,'2026-01-15'),
-('Hand Towel',80,145,'2026-01-15'),('Hand Soap (Calmic)',15,21,'2026-01-15'),
-('Tisu Roll',0,0,'2026-01-15'),('Safety Box Jerigen 5 L',320,30,'2026-01-15'),
-('Safety Box Kontainer 5 L',38,2,'2026-01-15'),('Safety Box Kontainer 1 L',25,1,'2026-01-15'),
-('Floor Cleaner',11,2,'2026-01-15'),('Karbol',10,1,'2026-01-15'),
-('Bowl Getter',8,1,'2026-01-15'),('Detergent Boom',16,3,'2026-01-15'),
-('Pengharum Toilet/Stella',22,4,'2026-01-15'),('Tapas Hijau',298,8,'2026-01-15'),
-('Kuas',9,1,'2026-01-15'),('Kape',7,1,'2026-01-15'),
-('Sprayer',142,2,'2026-01-15'),('Nilon Broom',13,1,'2026-01-15'),
-('Broom set Dustpan mini',8,0,'2026-01-15'),('Lobby Duster',5,1,'2026-01-15'),
-('Tissue Facial (Wajah)',26,4,'2026-01-15'),('Refill Looby',10,1,'2026-01-15'),
-('Refill Mop Kuning',6,1,'2026-01-15'),('Refill Mop Merah',6,0,'2026-01-15'),
-('Refill Mop Hijau',6,1,'2026-01-15'),('Refill Mop Biru',7,1,'2026-01-15'),
-('Lap Micro Fiber Merah',14,2,'2026-01-15'),('Lap Micro Fiber Kuning',15,1,'2026-01-15'),
-('Lap Micro Fiber Hijau',11,3,'2026-01-15'),('Lap Micro Fiber Biru',14,2,'2026-01-15'),
-('Disinfektan H2O2',31,7,'2026-01-15'),
+-- === PEKAN 3 JANUARI 2026 ===
+('Safety Box Jerigen 5 L', 'Pcs', 15, 1, '2026-01-19'),
+('Safety Box Kontainer 5 L', 'Pcs', 15, 2, '2026-01-20'),
+('Safety Box Kontainer 1 L', 'Pcs', 30, 5, '2026-01-20'),
+('Floor Cleaner', 'Jerigen', 10, 1, '2026-01-21'),
+('Karbol', 'Jerigen', 10, 2, '2026-01-21'),
+('Bowl Getter', 'Botol', 15, 3, '2026-01-22'),
 
--- === 18 Januari 2026 ===
-('Hitam 40',570,2,'2026-01-18'),('Hitam 60',100,46,'2026-01-18'),('Hitam 90',30,31,'2026-01-18'),
-('Kuning 40',20,0,'2026-01-18'),('Kuning 60',10,0,'2026-01-18'),('Kuning 90',100,15,'2026-01-18'),
-('Ungu 40',6,0,'2026-01-18'),('Ungu 60',45,2,'2026-01-18'),
-('Coklat 40',5,0,'2026-01-18'),('Coklat 60',50,5,'2026-01-18'),
-('Hand Towel',50,240,'2026-01-18'),('Hand Soap (Calmic)',12,45,'2026-01-18'),
-('Tisu Roll',0,0,'2026-01-18'),('Safety Box Jerigen 5 L',290,25,'2026-01-18'),
-('Safety Box Kontainer 5 L',36,3,'2026-01-18'),('Safety Box Kontainer 1 L',24,1,'2026-01-18'),
-('Floor Cleaner',9,1,'2026-01-18'),('Karbol',9,2,'2026-01-18'),
-('Bowl Getter',7,0,'2026-01-18'),('Detergent Boom',13,2,'2026-01-18'),
-('Pengharum Toilet/Stella',18,3,'2026-01-18'),('Tapas Hijau',290,10,'2026-01-18'),
-('Kuas',8,0,'2026-01-18'),('Kape',6,0,'2026-01-18'),
-('Sprayer',140,4,'2026-01-18'),('Nilon Broom',12,1,'2026-01-18'),
-('Broom set Dustpan mini',8,1,'2026-01-18'),('Lobby Duster',4,0,'2026-01-18'),
-('Tissue Facial (Wajah)',22,3,'2026-01-18'),('Refill Looby',9,0,'2026-01-18'),
-('Refill Mop Kuning',5,0,'2026-01-18'),('Refill Mop Merah',6,1,'2026-01-18'),
-('Refill Mop Hijau',5,0,'2026-01-18'),('Refill Mop Biru',6,0,'2026-01-18'),
-('Lap Micro Fiber Merah',12,1,'2026-01-18'),('Lap Micro Fiber Kuning',14,2,'2026-01-18'),
-('Lap Micro Fiber Hijau',8,1,'2026-01-18'),('Lap Micro Fiber Biru',12,1,'2026-01-18'),
-('Disinfektan H2O2',24,4,'2026-01-18'),
+-- === PEKAN 4 JANUARI 2026 ===
+('Detergent Boom', 'Bungkus', 50, 8, '2026-01-26'),
+('Pengharum Toilet/Stella', 'Pcs', 40, 6, '2026-01-27'),
+('Tapas Hijau', 'Pcs', 30, 5, '2026-01-28'),
+('Kuas', 'Pcs', 20, 2, '2026-01-29'),
+('Kape', 'Pcs', 15, 1, '2026-01-29'),
+('Sprayer', 'Pcs', 10, 2, '2026-01-30'),
 
--- === 22 Januari 2026 ===
-('Hitam 40',565,0,'2026-01-22'),('Hitam 60',60,46,'2026-01-22'),('Hitam 90',20,45,'2026-01-22'),
-('Kuning 40',20,0,'2026-01-22'),('Kuning 60',10,0,'2026-01-22'),('Kuning 90',85,20,'2026-01-22'),
-('Ungu 40',6,0,'2026-01-22'),('Ungu 60',42,0,'2026-01-22'),
-('Coklat 40',5,0,'2026-01-22'),('Coklat 60',45,10,'2026-01-22'),
-('Hand Towel',200,130,'2026-01-22'),('Hand Soap (Calmic)',8,45,'2026-01-22'),
-('Tisu Roll',0,0,'2026-01-22'),('Safety Box Jerigen 5 L',260,35,'2026-01-22'),
-('Safety Box Kontainer 5 L',33,2,'2026-01-22'),('Safety Box Kontainer 1 L',23,2,'2026-01-22'),
-('Floor Cleaner',8,3,'2026-01-22'),('Karbol',7,1,'2026-01-22'),
-('Bowl Getter',7,1,'2026-01-22'),('Detergent Boom',11,1,'2026-01-22'),
-('Pengharum Toilet/Stella',15,5,'2026-01-22'),('Tapas Hijau',280,6,'2026-01-22'),
-('Kuas',8,1,'2026-01-22'),('Kape',6,0,'2026-01-22'),
-('Sprayer',136,3,'2026-01-22'),('Nilon Broom',11,2,'2026-01-22'),
-('Broom set Dustpan mini',7,0,'2026-01-22'),('Lobby Duster',4,1,'2026-01-22'),
-('Tissue Facial (Wajah)',19,5,'2026-01-22'),('Refill Looby',9,1,'2026-01-22'),
-('Refill Mop Kuning',5,1,'2026-01-22'),('Refill Mop Merah',5,0,'2026-01-22'),
-('Refill Mop Hijau',5,1,'2026-01-22'),('Refill Mop Biru',6,1,'2026-01-22'),
-('Lap Micro Fiber Merah',11,2,'2026-01-22'),('Lap Micro Fiber Kuning',12,1,'2026-01-22'),
-('Lap Micro Fiber Hijau',7,2,'2026-01-22'),('Lap Micro Fiber Biru',11,2,'2026-01-22'),
-('Disinfektan H2O2',20,5,'2026-01-22'),
+-- === PEKAN 1 FEBRUARI 2026 ===
+('Nilon Broom', 'Pcs', 15, 3, '2026-02-02'),
+('Broom set Dustpan mini', 'Set', 10, 2, '2026-02-03'),
+('Lobby Duster', 'Set', 5, 1, '2026-02-04'),
+('Tissue Facial (Wajah)', 'Box', 80, 10, '2026-02-05'),
+('Refill Looby', 'Pcs', 15, 2, '2026-02-06'),
 
--- === 26 Januari 2026 ===
-('Hitam 40',560,0,'2026-01-26'),('Hitam 60',40,8,'2026-01-26'),('Hitam 90',15,25,'2026-01-26'),
-('Kuning 40',20,0,'2026-01-26'),('Kuning 60',10,0,'2026-01-26'),('Kuning 90',70,32,'2026-01-26'),
-('Ungu 40',6,0,'2026-01-26'),('Ungu 60',40,2,'2026-01-26'),
-('Coklat 40',5,0,'2026-01-26'),('Coklat 60',40,7,'2026-01-26'),
-('Hand Towel',150,100,'2026-01-26'),('Hand Soap (Calmic)',5,14,'2026-01-26'),
-('Tisu Roll',0,0,'2026-01-26'),('Safety Box Jerigen 5 L',230,76,'2026-01-26'),
-('Safety Box Kontainer 5 L',31,4,'2026-01-26'),('Safety Box Kontainer 1 L',21,1,'2026-01-26'),
-('Floor Cleaner',5,1,'2026-01-26'),('Karbol',6,1,'2026-01-26'),
-('Bowl Getter',6,0,'2026-01-26'),('Detergent Boom',10,2,'2026-01-26'),
-('Pengharum Toilet/Stella',10,2,'2026-01-26'),('Tapas Hijau',274,9,'2026-01-26'),
-('Kuas',7,0,'2026-01-26'),('Kape',6,1,'2026-01-26'),
-('Sprayer',133,2,'2026-01-26'),('Nilon Broom',9,1,'2026-01-26'),
-('Broom set Dustpan mini',7,1,'2026-01-26'),('Lobby Duster',3,0,'2026-01-26'),
-('Tissue Facial (Wajah)',14,3,'2026-01-26'),('Refill Looby',8,0,'2026-01-26'),
-('Refill Mop Kuning',4,0,'2026-01-26'),('Refill Mop Merah',5,1,'2026-01-26'),
-('Refill Mop Hijau',4,0,'2026-01-26'),('Refill Mop Biru',5,0,'2026-01-26'),
-('Lap Micro Fiber Merah',9,1,'2026-01-26'),('Lap Micro Fiber Kuning',11,2,'2026-01-26'),
-('Lap Micro Fiber Hijau',5,1,'2026-01-26'),('Lap Micro Fiber Biru',9,1,'2026-01-26'),
-('Disinfektan H2O2',15,3,'2026-01-26'),
+-- === PEKAN 2 FEBRUARI 2026 ===
+('Refill Mop Kuning', 'Pcs', 20, 4, '2026-02-09'),
+('Refill Mop Merah', 'Pcs', 20, 3, '2026-02-10'),
+('Refill Mop Hijau', 'Pcs', 20, 5, '2026-02-11'),
+('Refill Mop Biru', 'Pcs', 20, 2, '2026-02-12'),
+('Lap Micro Fiber Merah', 'Pcs', 30, 6, '2026-02-13'),
+('Lap Micro Fiber Kuning', 'Pcs', 30, 8, '2026-02-13'),
+('Lap Micro Fiber Hijau', 'Pcs', 30, 7, '2026-02-14'),
+('Lap Micro Fiber Biru', 'Pcs', 30, 5, '2026-02-14'),
+('Disinfektan H2O2', 'Jerigen', 10, 1, '2026-02-15'),
 
--- === 29 Januari 2026 ===
-('Hitam 40',555,10,'2026-01-29'),('Hitam 60',30,4,'2026-01-29'),('Hitam 90',10,58,'2026-01-29'),
-('Kuning 40',20,0,'2026-01-29'),('Kuning 60',10,0,'2026-01-29'),('Kuning 90',55,34,'2026-01-29'),
-('Ungu 40',6,0,'2026-01-29'),('Ungu 60',38,0,'2026-01-29'),
-('Coklat 40',5,0,'2026-01-29'),('Coklat 60',35,10,'2026-01-29'),
-('Hand Towel',300,130,'2026-01-29'),('Hand Soap (Calmic)',3,22,'2026-01-29'),
-('Tisu Roll',0,0,'2026-01-29'),('Safety Box Jerigen 5 L',200,30,'2026-01-29'),
-('Safety Box Kontainer 5 L',27,3,'2026-01-29'),('Safety Box Kontainer 1 L',20,2,'2026-01-29'),
-('Floor Cleaner',4,2,'2026-01-29'),('Karbol',5,1,'2026-01-29'),
-('Bowl Getter',6,1,'2026-01-29'),('Detergent Boom',8,1,'2026-01-29'),
-('Pengharum Toilet/Stella',8,3,'2026-01-29'),('Tapas Hijau',265,11,'2026-01-29'),
-('Kuas',7,1,'2026-01-29'),('Kape',5,0,'2026-01-29'),
-('Sprayer',131,3,'2026-01-29'),('Nilon Broom',8,1,'2026-01-29'),
-('Broom set Dustpan mini',6,0,'2026-01-29'),('Lobby Duster',3,1,'2026-01-29'),
-('Tissue Facial (Wajah)',11,4,'2026-01-29'),('Refill Looby',8,1,'2026-01-29'),
-('Refill Mop Kuning',4,1,'2026-01-29'),('Refill Mop Merah',4,0,'2026-01-29'),
-('Refill Mop Hijau',4,1,'2026-01-29'),('Refill Mop Biru',5,1,'2026-01-29'),
-('Lap Micro Fiber Merah',8,2,'2026-01-29'),('Lap Micro Fiber Kuning',9,1,'2026-01-29'),
-('Lap Micro Fiber Hijau',4,2,'2026-01-29'),('Lap Micro Fiber Biru',8,1,'2026-01-29'),
-('Disinfektan H2O2',12,4,'2026-01-29');
+-- === PEKAN 3 FEBRUARI 2026 ===
+('Hitam 40', 'Pcs', 45, 6, '2026-02-16'),
+('Hitam 60', 'Pcs', 42, 7, '2026-02-16'),
+('Kuning 40', 'Pcs', 50, 9, '2026-02-16'),
+('Hand Towel', 'Pack', 85, 12, '2026-02-16'),
+('Tisu Roll', 'Roll', 175, 20, '2026-02-16');
+
+
+-- ============================================
+-- DUMMY DATA: laporan (ADMIN DASHBOARD)
+-- Periode: 16 Februari 2026 (hari ini)
+-- ============================================
+
+INSERT INTO laporan (waktu, tanggal, petugas, area_id, area_nama, shift, sudah_dibersihkan, belum_dibersihkan, sampah_infeksius, sampah_anorganik, sampah_safety_box, sampah_kardus, logistik_kuning_90, logistik_kuning_60, logistik_kuning_40, logistik_hitam_90, logistik_hitam_60, logistik_hitam_40, logistik_ungu, logistik_coklat, logistik_safety_box, logistik_hand_towel, kendala, foto_url, status) VALUES
+
+-- ===== SHIFT PAGI (P) - 06.00-14.00 =====
+('06:15', '2026-02-16', 'Slamet Riyadi', 1, 'Poli Melati, Parkir Lt.2 & 3, PU, Lapangan Parkir Belakang', 'P',
+ 'Lantai disapu & dipel, kaca pintu dilap, tempat sampah dikosongkan', NULL,
+ 2.5, 1.0, 0, 0.5, 2, 1, 3, 1, 2, 2, 0, 0, 1, 5,
+ NULL, NULL, 'selesai'),
+
+('06:30', '2026-02-16', 'Bambang Susanto', 9, 'Lobby, Gedung Entrance & Endoscopy, Toilet Umum Lobby, Registrasi, Poli Lt.1', 'P',
+ 'Lobby & entrance dipel, toilet umum dibersihkan, kaca dilap', NULL,
+ 1.5, 2.0, 0, 1.0, 3, 2, 4, 2, 3, 3, 1, 0, 0, 8,
+ NULL, NULL, 'selesai'),
+
+('06:45', '2026-02-16', 'Agus Prasetyo', 12, 'IGD Lt.1 & 2', 'P',
+ 'Ruang IGD Lt.1 dipel, bed-bed dibersihkan', 'IGD Lt.2 area tunggu',
+ 5.0, 1.5, 1.0, 0, 4, 3, 5, 2, 1, 2, 3, 1, 2, 4,
+ 'Ada tumpahan cairan infus di lorong IGD Lt.2, perlu pembersihan khusus', NULL, 'kendala'),
+
+('07:00', '2026-02-16', 'Wati Suryani', 6, 'Anggrek Eksekutif Lt.1', 'P',
+ 'Seluruh area eksekutif Lt.1 dibersihkan, bed ganti sprei, kamar mandi dipel', NULL,
+ 3.0, 0.5, 0.5, 0, 2, 2, 3, 1, 1, 1, 1, 1, 1, 6,
+ NULL, NULL, 'selesai'),
+
+('07:15', '2026-02-16', 'Dedi Kurniawan', 10, 'Farmasi Lt.1, Logistik, Lift Kuning & Koridor Lt.1, Laundry & Kitchen, Koridor Belakang', 'P',
+ 'Koridor dipel, lift kuning dilap, area farmasi dibersihkan', 'Area kitchen belum selesai',
+ 1.0, 3.5, 0, 2.0, 1, 1, 2, 2, 3, 4, 0, 1, 0, 3,
+ 'Lift kuning sempat macet 30 menit, tidak bisa bersihkan dalam lift', NULL, 'kendala'),
+
+('07:30', '2026-02-16', 'Rina Marlina', 2, 'Halaman, Taman Wings, Taman Herbal', 'P1',
+ 'Halaman disapu, taman Wings disiram, daun kering dibuang, rumput dipotong', NULL,
+ 0, 0.5, 0, 0, 0, 0, 0, 3, 2, 5, 0, 0, 0, 0,
+ NULL, NULL, 'selesai'),
+
+('07:45', '2026-02-16', 'Hendra Saputra', 13, 'Energy Center, Parkir Dokter Spesialis, IPAL', 'P1',
+ 'Area parkir disapu, IPAL dicek, sampah dikumpulkan', NULL,
+ 0, 1.0, 0, 3.0, 0, 0, 0, 2, 3, 4, 0, 0, 0, 0,
+ NULL, NULL, 'selesai'),
+
+-- ===== NON SHIFT (NS) - 07.00-16.00 =====
+('07:00', '2026-02-16', 'Sri Wahyuni', 5, 'Gedung Admin', 'NS',
+ 'Ruang meeting dipel, meja dilap, toilet admin dibersihkan, kaca dilap', NULL,
+ 0.5, 1.0, 0, 1.5, 1, 0, 2, 1, 1, 2, 0, 0, 0, 4,
+ NULL, NULL, 'selesai'),
+
+('07:15', '2026-02-16', 'Joko Widodo', 14, 'Poli Seluruh Lt.2, CSSD, Lab, Gudang Farmasi', 'NS',
+ 'Lab dibersihkan, CSSD area steril dipel, gudang farmasi disapu', 'Poli anak belum selesai',
+ 4.0, 2.0, 2.0, 1.0, 5, 3, 6, 2, 2, 3, 2, 1, 3, 6,
+ NULL, NULL, 'selesai'),
+
+('07:30', '2026-02-16', 'Nur Hidayah', 16, 'ICU, NS All & Koridor Belakang, HD, Pain Clinic, Koridor Tengah, Toilet Umum, ODC', 'NS',
+ 'ICU dibersihkan dengan protokol ketat, HD area dipel, toilet umum dibersihkan', NULL,
+ 6.0, 1.0, 1.5, 0, 6, 4, 7, 3, 2, 2, 4, 2, 3, 8,
+ NULL, NULL, 'selesai'),
+
+('08:00', '2026-02-16', 'Yusuf Maulana', 8, 'Dental, IT', 'NS',
+ 'Ruang dental sterilisasi, ruang IT disapu & dipel, meja dilap', NULL,
+ 1.0, 0.5, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 0, 2,
+ NULL, NULL, 'selesai'),
+
+('08:15', '2026-02-16', 'Fitri Handayani', 15, 'COT', 'NS',
+ 'COT area operasi dibersihkan, instrumen dicek, lantai dipel', NULL,
+ 3.5, 0.5, 0.5, 0, 3, 2, 4, 1, 1, 1, 2, 1, 2, 3,
+ NULL, NULL, 'selesai'),
+
+-- ===== SHIFT MIDDLE (MD) - 10.00-18.00 =====
+('10:00', '2026-02-16', 'Dwi Cahyono', 7, 'Anggrek Eksekutif M2', 'MD',
+ 'Area M2 dipel ulang, bed-bed diperiksa, kamar mandi dicek', NULL,
+ 2.0, 0.5, 0, 0, 2, 1, 3, 1, 1, 1, 1, 0, 1, 4,
+ NULL, NULL, 'selesai'),
+
+('10:15', '2026-02-16', 'Ratna Dewi', 17, 'Lt.5 & VK', 'MD',
+ 'Lt.5 kamar pasien dipel, VK disterilkan, toilet dibersihkan', NULL,
+ 4.5, 1.0, 1.0, 0.5, 4, 3, 5, 2, 1, 2, 3, 1, 2, 7,
+ NULL, NULL, 'selesai'),
+
+('10:30', '2026-02-16', 'Eko Prasetyo', 18, 'Lt.6', 'MD',
+ 'Seluruh kamar dibersihkan, koridor dipel, tempat sampah dikosongkan', NULL,
+ 3.0, 1.5, 0, 0, 3, 2, 4, 2, 2, 3, 1, 0, 1, 5,
+ NULL, NULL, 'selesai'),
+
+('10:45', '2026-02-16', 'Siti Aminah', 19, 'Lt.10', 'MD',
+ 'Kamar VIP disapu & dipel, kamar mandi disikat, kaca dilap', NULL,
+ 2.5, 0.5, 0, 0, 2, 2, 3, 1, 1, 1, 1, 1, 0, 6,
+ NULL, NULL, 'selesai'),
+
+-- ===== NON SHIFT 2 (NS 2) - 11.00-20.00 =====
+('11:00', '2026-02-16', 'Andi Firmansyah', 20, 'Lt.11', 'NS 2',
+ 'Area Lt.11 dipel, tempat sampah diganti, kamar mandi dicek', NULL,
+ 2.0, 1.0, 0, 0, 2, 1, 3, 1, 2, 2, 1, 0, 0, 4,
+ NULL, NULL, 'selesai'),
+
+('11:15', '2026-02-16', 'Maya Putri', 21, 'Lt.12', 'NS 2',
+ 'Kamar pasien dibersihkan, koridor dipel, nurse station dilap', 'Lift barang Lt.12 mati',
+ 3.0, 1.0, 0.5, 0, 3, 2, 4, 2, 1, 2, 2, 1, 1, 5,
+ 'Lift barang di Lt.12 tidak berfungsi, sampah harus dibawa lewat tangga darurat', NULL, 'kendala'),
+
+('11:30', '2026-02-16', 'Hadi Santoso', 22, 'Lt.13', 'NS 2',
+ 'Seluruh area Lt.13 dibersihkan termasuk kamar isolasi', NULL,
+ 4.0, 1.5, 1.0, 0, 4, 3, 5, 2, 2, 3, 3, 1, 2, 6,
+ NULL, NULL, 'selesai'),
+
+('11:45', '2026-02-16', 'Lestari Wulandari', 23, 'Lt.14', 'NS 2',
+ 'Area Lt.14 ruang VIP dibersihkan, kamar mandi dipel & disikat', NULL,
+ 2.0, 0.5, 0, 0, 2, 1, 3, 1, 1, 1, 1, 0, 0, 5,
+ NULL, NULL, 'selesai'),
+
+-- ===== SHIFT SIANG (S) - 14.00-22.00 =====
+('14:00', '2026-02-16', 'Budi Setiawan', 9, 'Lobby, Gedung Entrance & Endoscopy, Toilet Umum Lobby, Registrasi, Poli Lt.1', 'S',
+ 'Lobby dipel ulang siang, toilet umum dicek & dibersihkan, registrasi dilap', NULL,
+ 1.0, 1.5, 0, 0.5, 2, 1, 3, 1, 2, 2, 0, 0, 0, 6,
+ NULL, NULL, 'selesai'),
+
+('14:15', '2026-02-16', 'Teguh Prabowo', 12, 'IGD Lt.1 & 2', 'S',
+ 'IGD shift siang dipel, area triage dibersihkan, sampah dibuang', NULL,
+ 4.5, 2.0, 0.5, 0, 3, 2, 4, 2, 1, 2, 2, 1, 1, 4,
+ NULL, NULL, 'selesai'),
+
+('14:30', '2026-02-16', 'Dian Pratiwi', 16, 'ICU, NS All & Koridor Belakang, HD, Pain Clinic, Koridor Tengah, Toilet Umum, ODC', 'S',
+ 'ICU pembersihan rutin siang, koridor dan toilet dicek ulang', NULL,
+ 5.0, 1.0, 1.0, 0, 5, 3, 6, 2, 2, 2, 3, 1, 2, 7,
+ NULL, NULL, 'selesai'),
+
+('14:45', '2026-02-16', 'Arief Budiman', 11, 'Radiologi, Forensik, CR', 'S',
+ 'Radiologi dibersihkan setelah jam praktek, CR dipel, forensik dicek', NULL,
+ 2.0, 0.5, 0, 0, 1, 1, 2, 1, 1, 1, 0, 0, 0, 2,
+ NULL, NULL, 'selesai'),
+
+-- ===== SHIFT MIDDLE 2 (MD 2) - 12.00-20.00 =====
+('12:00', '2026-02-16', 'Lia Rahmawati', 4, 'Staff Quarter & SQ Lt.1', 'MD 2',
+ 'SQ dipel, kamar mandi dicek, area bersama disapu', NULL,
+ 0.5, 0.5, 0, 0, 1, 0, 1, 1, 1, 2, 0, 0, 0, 3,
+ NULL, NULL, 'selesai'),
+
+('12:15', '2026-02-16', 'Rizky Maulana', 3, 'Halaman, Taman Wings, Taman Herbal, PU (Landscape)', 'MD 2',
+ 'Taman disiram siang, daun kering dibereskan, area PU dicek', NULL,
+ 0, 0.5, 0, 0, 0, 0, 0, 2, 1, 3, 0, 0, 0, 0,
+ NULL, NULL, 'selesai');
+
+
+-- ============================================
+-- DUMMY DATA: laporan - HARI KEMARIN
+-- Tanggal: 15 Februari 2026
+-- (untuk testing filter tanggal)
+-- ============================================
+
+INSERT INTO laporan (waktu, tanggal, petugas, area_id, area_nama, shift, sudah_dibersihkan, belum_dibersihkan, sampah_infeksius, sampah_anorganik, sampah_safety_box, sampah_kardus, logistik_kuning_90, logistik_kuning_60, logistik_kuning_40, logistik_hitam_90, logistik_hitam_60, logistik_hitam_40, logistik_ungu, logistik_coklat, logistik_safety_box, logistik_hand_towel, kendala, foto_url, status) VALUES
+
+('06:15', '2026-02-15', 'Slamet Riyadi', 1, 'Poli Melati, Parkir Lt.2 & 3, PU, Lapangan Parkir Belakang', 'P',
+ 'Seluruh area poli melati dibersihkan, parkir disapu', NULL,
+ 2.0, 1.5, 0, 1.0, 2, 1, 3, 1, 2, 3, 0, 0, 1, 4,
+ NULL, NULL, 'selesai'),
+
+('06:30', '2026-02-15', 'Bambang Susanto', 9, 'Lobby, Gedung Entrance & Endoscopy, Toilet Umum Lobby, Registrasi, Poli Lt.1', 'P',
+ 'Lobby bersih, toilet umum dipel, kaca dilap', NULL,
+ 1.5, 2.5, 0, 0.5, 3, 2, 4, 2, 3, 3, 1, 0, 0, 7,
+ NULL, NULL, 'selesai'),
+
+('07:00', '2026-02-15', 'Agus Prasetyo', 12, 'IGD Lt.1 & 2', 'P',
+ 'IGD Lt.1 & 2 dibersihkan menyeluruh', NULL,
+ 6.0, 2.0, 1.5, 0, 5, 4, 6, 2, 2, 3, 4, 1, 3, 5,
+ NULL, NULL, 'selesai'),
+
+('07:15', '2026-02-15', 'Sri Wahyuni', 5, 'Gedung Admin', 'NS',
+ 'Gedung admin bersih, meeting room siap', NULL,
+ 0.5, 1.0, 0, 2.0, 1, 0, 2, 1, 1, 2, 0, 0, 0, 3,
+ NULL, NULL, 'selesai'),
+
+('07:30', '2026-02-15', 'Nur Hidayah', 16, 'ICU, NS All & Koridor Belakang, HD, Pain Clinic, Koridor Tengah, Toilet Umum, ODC', 'NS',
+ 'ICU bersih, semua koridor dipel', NULL,
+ 5.5, 1.0, 2.0, 0, 5, 3, 6, 3, 2, 2, 3, 2, 3, 9,
+ NULL, NULL, 'selesai'),
+
+('08:00', '2026-02-15', 'Fitri Handayani', 15, 'COT', 'NS',
+ 'COT steril, semua area operasi dibersihkan', NULL,
+ 4.0, 0.5, 1.0, 0, 3, 2, 5, 1, 1, 1, 2, 1, 2, 4,
+ NULL, NULL, 'selesai'),
+
+('10:00', '2026-02-15', 'Ratna Dewi', 17, 'Lt.5 & VK', 'MD',
+ 'Lt.5 bersih, VK sterilisasi selesai', 'Gudang VK belum tersusun rapi',
+ 4.0, 1.5, 1.0, 0.5, 4, 3, 5, 2, 1, 2, 3, 1, 2, 6,
+ 'Gudang VK penuh, barang belum tersusun rapi sehingga menghambat pembersihan', NULL, 'kendala'),
+
+('10:30', '2026-02-15', 'Eko Prasetyo', 18, 'Lt.6', 'MD',
+ 'Lt.6 kamar pasien bersih, koridor dipel', NULL,
+ 3.5, 1.0, 0, 0, 3, 2, 4, 2, 2, 3, 1, 0, 1, 5,
+ NULL, NULL, 'selesai'),
+
+('11:00', '2026-02-15', 'Andi Firmansyah', 20, 'Lt.11', 'NS 2',
+ 'Area Lt.11 bersih menyeluruh', NULL,
+ 2.5, 1.0, 0, 0, 2, 1, 3, 1, 2, 2, 1, 0, 0, 4,
+ NULL, NULL, 'selesai'),
+
+('14:00', '2026-02-15', 'Budi Setiawan', 9, 'Lobby, Gedung Entrance & Endoscopy, Toilet Umum Lobby, Registrasi, Poli Lt.1', 'S',
+ 'Lobby siang bersih, toilet dicek', NULL,
+ 1.0, 1.0, 0, 0.5, 2, 1, 3, 1, 2, 2, 0, 0, 0, 5,
+ NULL, NULL, 'selesai'),
+
+('14:30', '2026-02-15', 'Teguh Prabowo', 12, 'IGD Lt.1 & 2', 'S',
+ 'IGD shift siang selesai dibersihkan', 'Ruang observasi IGD Lt.2',
+ 5.0, 1.5, 0.5, 0, 4, 3, 5, 2, 1, 2, 3, 1, 2, 4,
+ 'Ruang observasi IGD Lt.2 penuh pasien, tidak bisa dibersihkan sepenuhnya', NULL, 'kendala'),
+
+('22:00', '2026-02-15', 'Herman Wijaya', 9, 'Lobby, Gedung Entrance & Endoscopy, Toilet Umum Lobby, Registrasi, Poli Lt.1', 'M',
+ 'Lobby malam dipel, area entrance dicek, toilet malam dibersihkan', NULL,
+ 0.5, 0.5, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 2,
+ NULL, NULL, 'selesai');
+
+
+-- ============================================
+-- DUMMY DATA: laporan - 14 Februari 2026
+-- (untuk testing histori)
+-- ============================================
+
+INSERT INTO laporan (waktu, tanggal, petugas, area_id, area_nama, shift, sudah_dibersihkan, belum_dibersihkan, sampah_infeksius, sampah_anorganik, sampah_safety_box, sampah_kardus, logistik_kuning_90, logistik_kuning_60, logistik_kuning_40, logistik_hitam_90, logistik_hitam_60, logistik_hitam_40, logistik_ungu, logistik_coklat, logistik_safety_box, logistik_hand_towel, kendala, foto_url, status) VALUES
+
+('06:15', '2026-02-14', 'Slamet Riyadi', 1, 'Poli Melati, Parkir Lt.2 & 3, PU, Lapangan Parkir Belakang', 'P',
+ 'Area poli melati dan parkir dibersihkan', NULL,
+ 2.0, 1.0, 0, 0.5, 2, 1, 3, 1, 2, 2, 0, 0, 1, 5,
+ NULL, NULL, 'selesai'),
+
+('06:30', '2026-02-14', 'Agus Prasetyo', 12, 'IGD Lt.1 & 2', 'P',
+ 'IGD pagi dibersihkan menyeluruh', NULL,
+ 5.5, 2.0, 1.0, 0, 4, 3, 5, 2, 1, 2, 3, 1, 2, 5,
+ NULL, NULL, 'selesai'),
+
+('07:00', '2026-02-14', 'Sri Wahyuni', 5, 'Gedung Admin', 'NS',
+ 'Gedung admin lantai 1 & 2 bersih', NULL,
+ 0.5, 1.0, 0, 1.5, 1, 0, 2, 1, 1, 2, 0, 0, 0, 4,
+ NULL, NULL, 'selesai'),
+
+('07:30', '2026-02-14', 'Nur Hidayah', 16, 'ICU, NS All & Koridor Belakang, HD, Pain Clinic, Koridor Tengah, Toilet Umum, ODC', 'NS',
+ 'ICU & HD dibersihkan dengan protokol steril', NULL,
+ 6.5, 1.5, 2.0, 0, 6, 4, 7, 3, 2, 2, 4, 2, 3, 8,
+ NULL, NULL, 'selesai'),
+
+('10:00', '2026-02-14', 'Dwi Cahyono', 7, 'Anggrek Eksekutif M2', 'MD',
+ 'Eksekutif M2 kamar & koridor bersih', NULL,
+ 2.0, 0.5, 0, 0, 2, 1, 3, 1, 1, 1, 1, 0, 1, 4,
+ NULL, NULL, 'selesai'),
+
+('10:30', '2026-02-14', 'Siti Aminah', 19, 'Lt.10', 'MD',
+ 'Lt.10 VIP room dibersihkan menyeluruh', NULL,
+ 2.5, 0.5, 0, 0, 2, 2, 3, 1, 1, 1, 1, 1, 0, 6,
+ NULL, NULL, 'selesai'),
+
+('14:00', '2026-02-14', 'Dian Pratiwi', 16, 'ICU, NS All & Koridor Belakang, HD, Pain Clinic, Koridor Tengah, Toilet Umum, ODC', 'S',
+ 'ICU shift siang selesai, koridor & toilet dicek', NULL,
+ 4.0, 1.0, 1.0, 0, 4, 2, 5, 2, 2, 2, 2, 1, 2, 6,
+ NULL, NULL, 'selesai'),
+
+('14:30', '2026-02-14', 'Arief Budiman', 11, 'Radiologi, Forensik, CR', 'S',
+ 'Radiologi & forensik area dibersihkan', NULL,
+ 2.0, 0.5, 0, 0, 1, 1, 2, 1, 1, 1, 0, 0, 0, 2,
+ NULL, NULL, 'selesai'),
+
+('22:00', '2026-02-14', 'Herman Wijaya', 12, 'IGD Lt.1 & 2', 'M',
+ 'IGD malam dibersihkan, area triage dipel', NULL,
+ 3.0, 1.0, 0.5, 0, 2, 1, 3, 1, 1, 1, 1, 0, 1, 3,
+ NULL, NULL, 'selesai');

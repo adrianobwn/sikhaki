@@ -4,12 +4,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import {
     Package, Plus, Calendar, Search,
-
+    Download,
     Trash2, Pencil, LogOut, ArrowLeft,
     Loader2, AlertTriangle,
 } from "lucide-react";
 import GudangNavbar from "@/components/gudang/GudangNavbar";
-import StockChart from "@/components/admin/StockChart";
+import MonthlyStockChart from "@/components/gudang/MonthlyStockChart";
 import StokBarangForm from "@/components/admin/StokBarangForm";
 import { fetchStokBarang, deleteStokBarang, getStokTimeSeries, type StokBarangRow } from "@/lib/supabase";
 import { Warehouse, TrendingUp } from "lucide-react";
@@ -18,7 +18,7 @@ import { Warehouse, TrendingUp } from "lucide-react";
 
 export default function StokBarangPage() {
     const [data, setData] = useState<StokBarangRow[]>([]);
-    const [chartData, setChartData] = useState<Array<{ nama_barang: string; data: { tanggal: string; pengambilan: number }[] }>>([]);
+    const [chartData, setChartData] = useState<Array<{ nama_barang: string; satuan: string; data: { tanggal: string; pengambilan: number }[] }>>([]);
     const [loading, setLoading] = useState(true);
     const [filterDate, setFilterDate] = useState("");
     const [formOpen, setFormOpen] = useState(false);
@@ -67,6 +67,40 @@ export default function StokBarangPage() {
     const handleAdd = () => {
         setEditItem(null);
         setFormOpen(true);
+    };
+
+    const handleExportExcel = () => {
+        if (data.length === 0) return;
+
+        const XLSX = require("xlsx");
+
+        const rows = data.map((row, idx) => ({
+            "No": idx + 1,
+            "Nama Barang": row.nama_barang || "",
+            "Satuan": row.satuan || "-",
+            "Stok Awal": row.stok_awal,
+            "Pengambilan": row.pengambilan,
+            "Stok Sisa": row.stok_awal - row.pengambilan,
+            "Tanggal": row.tanggal,
+            "Keterangan": row.keterangan || "-",
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(rows);
+        ws["!cols"] = [
+            { wch: 5 },   // No
+            { wch: 25 },  // Nama Barang
+            { wch: 10 },  // Satuan
+            { wch: 12 },  // Stok Awal
+            { wch: 12 },  // Pengambilan
+            { wch: 12 },  // Stok Sisa
+            { wch: 14 },  // Tanggal
+            { wch: 25 },  // Keterangan
+        ];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Stok Barang");
+
+        const dateStr = filterDate || new Date().toISOString().split("T")[0];
+        XLSX.writeFile(wb, `stok-barang-${dateStr}.xlsx`);
     };
 
 
@@ -133,18 +167,27 @@ export default function StokBarangPage() {
                 </div>
 
                 {/* Stock Charts */}
-                <StockChart data={chartData} />
+                <MonthlyStockChart data={chartData} />
 
                 {/* Action Bar */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-slate-200">
-
-                    <button
-                        onClick={handleAdd}
-                        className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm shadow-amber-500/20 active:scale-[0.98]"
-                    >
-                        <Plus size={16} />
-                        Tambah Stok
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleAdd}
+                            className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm shadow-amber-500/20 active:scale-[0.98]"
+                        >
+                            <Plus size={16} />
+                            Tambah Stok
+                        </button>
+                        <button
+                            onClick={handleExportExcel}
+                            disabled={data.length === 0}
+                            className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm shadow-emerald-500/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Download size={16} />
+                            Export Excel
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filter */}
@@ -204,6 +247,7 @@ export default function StokBarangPage() {
                                     <tr className="bg-slate-50/80 border-b border-slate-100">
                                         <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-slate-500">No</th>
                                         <th className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-slate-500">Nama Barang</th>
+                                        <th className="text-center px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-slate-500">Satuan</th>
                                         <th className="text-center px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-slate-500">Stok Awal</th>
                                         <th className="text-center px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-slate-500">Pengambilan</th>
                                         <th className="text-center px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-slate-500">Stok Sisa</th>
@@ -222,6 +266,11 @@ export default function StokBarangPage() {
                                             <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="px-5 py-3 text-slate-500 font-semibold">{idx + 1}</td>
                                                 <td className="px-5 py-3 font-bold text-slate-800">{row.nama_barang}</td>
+                                                <td className="px-5 py-3 text-center">
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-600 uppercase">
+                                                        {row.satuan || '—'}
+                                                    </span>
+                                                </td>
                                                 <td className="px-5 py-3 text-center font-semibold text-slate-600">{row.stok_awal}</td>
                                                 <td className="px-5 py-3 text-center font-semibold text-orange-600">{row.pengambilan}</td>
                                                 <td className="px-5 py-3 text-center">

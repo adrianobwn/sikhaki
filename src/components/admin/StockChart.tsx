@@ -43,7 +43,7 @@ function formatDateFull(dateStr: string) {
 
 export default function StockChart({ data }: StockChartProps) {
     const [selectedItem, setSelectedItem] = useState<{ item: StokTimeSeriesItem; color: string } | null>(null);
-    const [viewMode, setViewMode] = useState<"summary" | "grid">("summary");
+    // Removed viewMode state, always "grid"
 
     useEffect(() => {
         if (selectedItem) {
@@ -77,109 +77,57 @@ export default function StockChart({ data }: StockChartProps) {
                     <div className="flex items-center gap-2">
                         <TrendingUp size={16} className="text-indigo-500" />
                         <h3 className="text-sm font-bold uppercase tracking-wide text-slate-700">
-                            {viewMode === "summary" ? "Total Pengambilan Barang" : "Grafik Pengambilan Barang per Tanggal"}
+                            Grafik Pengambilan Barang per Tanggal
                         </h3>
-                    </div>
-                    <div className="flex bg-slate-100 p-1 rounded-lg">
-                        <button
-                            onClick={() => setViewMode("summary")}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === "summary" ? "bg-white shadow-sm text-indigo-600" : "text-slate-400 hover:text-slate-600"}`}
-                            title="Tampilan Ringkas"
-                        >
-                            <BarChart2 size={16} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode("grid")}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === "grid" ? "bg-white shadow-sm text-indigo-600" : "text-slate-400 hover:text-slate-600"}`}
-                            title="Tampilan Grid Detail"
-                        >
-                            <LayoutGrid size={16} />
-                        </button>
                     </div>
                 </div>
 
-                {viewMode === "summary" ? (
-                    <div className="h-[400px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                                data={data.map((item) => ({
-                                    name: item.nama_barang,
-                                    total: item.data.reduce((s, d) => s + d.pengambilan, 0),
-                                }))}
-                                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis
-                                    dataKey="name"
-                                    tick={{ fontSize: 10, fill: "#64748b" }}
-                                    axisLine={false}
-                                    tickLine={false}
-                                    interval={0}
-                                    angle={-45}
-                                    textAnchor="end"
-                                />
-                                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                                <Tooltip
-                                    cursor={{ fill: "#f8fafc" }}
-                                    contentStyle={{ border: "none", borderRadius: 12, boxShadow: "0 4px 12px rgb(0 0 0 / 0.1)" }}
-                                />
-                                <Bar dataKey="total" radius={[4, 4, 0, 0]}>
-                                    {data.map((_, index) => (
-                                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                                    ))}
-                                    <LabelList dataKey="total" position="top" style={{ fontSize: 11, fontWeight: "bold", fill: "#64748b" }} />
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {data.map((item, idx) => {
-                            const chartData = item.data.map((d) => ({
-                                tanggal: formatDate(d.tanggal),
-                                Pengambilan: d.pengambilan,
-                            }));
-                            const color = CHART_COLORS[idx % CHART_COLORS.length];
-                            const totalPengambilan = item.data.reduce((s, d) => s + d.pengambilan, 0);
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {data.map((item, idx) => {
+                        const chartData = item.data.map((d) => ({
+                            tanggal: formatDate(d.tanggal),
+                            Pengambilan: d.pengambilan,
+                        }));
+                        const color = CHART_COLORS[idx % CHART_COLORS.length];
+                        const totalPengambilan = item.data.reduce((s, d) => s + d.pengambilan, 0);
 
-                            return (
-                                <div
-                                    key={item.nama_barang}
-                                    className="border border-slate-200 rounded-xl p-3 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group bg-white"
-                                    onClick={() => setSelectedItem({ item, color })}
-                                >
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h4 className="text-xs font-bold text-slate-800 truncate">{item.nama_barang}</h4>
-                                        <div className="flex items-center gap-1">
-                                            <span className="text-[10px] font-bold text-slate-400">{totalPengambilan}</span>
-                                            <Maximize2 size={10} className="text-slate-300 group-hover:text-blue-400 transition-colors" />
-                                        </div>
-                                    </div>
-                                    <div className="h-28 w-full">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <LineChart data={chartData} margin={{ top: 15, right: 10, left: -25, bottom: 0 }}>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                                                <XAxis dataKey="tanggal" tick={{ fontSize: 7, fill: "#94a3b8" }} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(chartData.length / 4) - 1)} />
-                                                <YAxis tick={{ fontSize: 8, fill: "#cbd5e1" }} axisLine={false} tickLine={false} />
-                                                <Line
-                                                    type="monotone"
-                                                    dataKey="Pengambilan"
-                                                    stroke={color}
-                                                    strokeWidth={2}
-                                                    strokeDasharray="5 3"
-                                                    dot={{ r: 3, fill: color, strokeWidth: 0 }}
-                                                    activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }}
-                                                >
-                                                    <LabelList dataKey="Pengambilan" position="top" style={{ fontSize: 8, fontWeight: 700, fill: color }} />
-                                                </Line>
-                                            </LineChart>
-                                        </ResponsiveContainer>
+                        return (
+                            <div
+                                key={item.nama_barang}
+                                className="border border-slate-200 rounded-xl p-3 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group bg-white"
+                                onClick={() => setSelectedItem({ item, color })}
+                            >
+                                <div className="flex items-center justify-between mb-2">
+                                    <h4 className="text-xs font-bold text-slate-800 truncate">{item.nama_barang}</h4>
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-[10px] font-bold text-slate-400">{totalPengambilan}</span>
+                                        <Maximize2 size={10} className="text-slate-300 group-hover:text-blue-400 transition-colors" />
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
-                )}
+                                <div className="h-28 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={chartData} margin={{ top: 15, right: 10, left: -25, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                                            <XAxis dataKey="tanggal" tick={{ fontSize: 7, fill: "#94a3b8" }} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(chartData.length / 4) - 1)} />
+                                            <YAxis tick={{ fontSize: 8, fill: "#cbd5e1" }} axisLine={false} tickLine={false} />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="Pengambilan"
+                                                stroke={color}
+                                                strokeWidth={2}
+                                                strokeDasharray="5 3"
+                                                dot={{ r: 3, fill: color, strokeWidth: 0 }}
+                                                activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }}
+                                            >
+                                                <LabelList dataKey="Pengambilan" position="top" style={{ fontSize: 8, fontWeight: 700, fill: color }} />
+                                            </Line>
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Popup Modal */}
