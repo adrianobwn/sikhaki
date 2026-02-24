@@ -139,8 +139,15 @@ export default function StokBarangForm({ isOpen, onClose, onSuccess, editData }:
                         </label>
                         <select
                             value={form.nama_barang}
-                            onChange={(e) => setForm({ ...form, nama_barang: e.target.value })}
-                            className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent appearance-none bg-white"
+                            onChange={(e) => {
+                                const selected = STOK_BARANG_ITEMS.find(item => item.nama === e.target.value);
+                                setForm({
+                                    ...form,
+                                    nama_barang: e.target.value,
+                                    satuan: selected?.satuan || form.satuan,
+                                });
+                            }}
+                            className="w-full border border-slate-200 rounded-xl p-3 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent appearance-none bg-white"
                         >
                             <option value="">— Pilih Barang —</option>
                             {STOK_BARANG_ITEMS.map((item) => (
@@ -160,8 +167,9 @@ export default function StokBarangForm({ isOpen, onClose, onSuccess, editData }:
                             type="text"
                             value={form.satuan}
                             onChange={(e) => setForm({ ...form, satuan: e.target.value })}
-                            placeholder="Contoh: Pcs, Rim, Box"
-                            className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
+                            placeholder="Otomatis terisi"
+                            className="w-full border border-slate-200 rounded-xl p-3 text-base font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-slate-50"
+                            readOnly
                         />
                     </div>
 
@@ -173,10 +181,12 @@ export default function StokBarangForm({ isOpen, onClose, onSuccess, editData }:
                             </label>
                             <input
                                 type="number"
+                                inputMode="numeric"
                                 min={0}
-                                value={form.stok_awal}
+                                value={form.stok_awal === 0 ? "" : form.stok_awal}
+                                placeholder="0"
                                 onChange={(e) => setForm({ ...form, stok_awal: parseInt(e.target.value) || 0 })}
-                                className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
+                                className="w-full border border-slate-200 rounded-xl p-3 text-base font-semibold placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
                             />
                         </div>
                         <div>
@@ -185,10 +195,12 @@ export default function StokBarangForm({ isOpen, onClose, onSuccess, editData }:
                             </label>
                             <input
                                 type="number"
+                                inputMode="numeric"
                                 min={0}
-                                value={form.pengambilan}
+                                value={form.pengambilan === 0 ? "" : form.pengambilan}
+                                placeholder="0"
                                 onChange={(e) => setForm({ ...form, pengambilan: parseInt(e.target.value) || 0 })}
-                                className="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
+                                className="w-full border border-slate-200 rounded-xl p-3 text-base font-semibold placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
                             />
                         </div>
                     </div>

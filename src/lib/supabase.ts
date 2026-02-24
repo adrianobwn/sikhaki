@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { safeQuery } from './error-handler';
 
 // Pastikan environment variables sudah di-set di .env.local
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -120,165 +121,80 @@ export async function uploadFoto(base64Data: string, fileName?: string): Promise
  * Insert laporan baru ke database
  */
 export async function insertLaporan(data: LaporanInsert) {
-  const { data: result, error } = await supabase
-    .from('laporan')
-    .insert([data])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error inserting laporan:', error);
-    throw error;
-  }
-
+  const result = await safeQuery(
+    () => supabase.from('laporan').insert([data]).select().single(),
+    'insertLaporan'
+  );
   return result;
 }
 
 /**
- * Fetch laporan dengan filter
+ * Bundled dashboard data — menggabungkan 4 query terpisah menjadi 1.
+ * Mengurangi round-trip ke database dari 4x menjadi 1x.
  */
-export async function fetchLaporan(filters?: {
-  tanggal?: string;
+export async function getDashboardBundle(filters: {
+  tanggal: string;
   shift?: string;
   area?: string;
   petugas?: string;
 }) {
   let query = supabase
     .from('laporan')
-    .select('*')
+    .select('id, waktu, tanggal, petugas, area_id, area_nama, shift, status, kendala, foto_url, sudah_dibersihkan, belum_dibersihkan, sampah_infeksius, sampah_anorganik, sampah_safety_box, sampah_kardus, logistik_kuning_90, logistik_kuning_60, logistik_kuning_40, logistik_hitam_90, logistik_hitam_60, logistik_hitam_40, logistik_ungu, logistik_coklat, logistik_safety_box, logistik_hand_towel, created_at')
+    .eq('tanggal', filters.tanggal)
     .order('created_at', { ascending: false });
 
-  if (filters?.tanggal) {
-    query = query.eq('tanggal', filters.tanggal);
-  }
-
-  if (filters?.shift) {
-    query = query.eq('shift', filters.shift);
-  }
-
-  if (filters?.area) {
-    query = query.eq('area_id', parseInt(filters.area));
-  }
-
-  if (filters?.petugas) {
-    query = query.ilike('petugas', `%${filters.petugas}%`);
-  }
+  if (filters.shift) query = query.eq('shift', filters.shift);
+  if (filters.area) query = query.eq('area_id', parseInt(filters.area));
+  if (filters.petugas) query = query.ilike('petugas', `%${filters.petugas}%`);
 
   const { data, error } = await query;
-
   if (error) {
-    console.error('Error fetching laporan:', error);
+    console.error('Error fetching dashboard bundle:', error);
     throw error;
   }
 
-  return data as LaporanRow[];
-}
+  const rows = data as LaporanRow[];
 
-/**
- * Get statistik dashboard
- */
-export async function getDashboardStats(tanggal: string) {
-  const { data, error } = await supabase
-    .from('laporan')
-    .select('*')
-    .eq('tanggal', tanggal);
-
-  if (error) {
-    console.error('Error fetching stats:', error);
-    return null;
-  }
-
-  const totalLaporan = data.length;
-  const areaSelesai = data.filter((r) => r.status === 'selesai').length;
-  const totalSampah = data.reduce(
-    (sum, r) =>
-      sum +
-      r.sampah_infeksius +
-      r.sampah_anorganik +
-      r.sampah_safety_box +
-      r.sampah_kardus,
-    0
-  );
-  const totalKendala = data.filter((r) => r.kendala).length;
-
-  return {
-    totalLaporan,
-    areaSelesai,
-    totalSampah: parseFloat(totalSampah.toFixed(1)),
-    totalKendala,
+  // Stats — dihitung dari dataset yang sama
+  const stats = {
+    totalLaporan: rows.length,
+    areaSelesai: rows.filter((r) => r.status === 'selesai').length,
+    totalSampah: parseFloat(
+      rows
+        .reduce(
+          (s, r) =>
+            s +
+            Number(r.sampah_infeksius) +
+            Number(r.sampah_anorganik) +
+            Number(r.sampah_safety_box) +
+            Number(r.sampah_kardus),
+          0
+        )
+        .toFixed(1)
+    ),
+    totalKendala: rows.filter((r) => r.kendala).length,
   };
-}
 
-/**
- * Get data untuk chart activity per shift
- */
-export async function getActivityChartData(tanggal: string) {
-  const { data, error } = await supabase
-    .from('laporan')
-    .select('shift, status')
-    .eq('tanggal', tanggal);
-
-  if (error) {
-    console.error('Error fetching activity chart:', error);
-    return [];
-  }
-
-  // Group by shift
-  const groupedByShift: Record<string, { laporan: number; selesai: number; kendala: number }> = {};
-
-  data.forEach((item) => {
-    if (!groupedByShift[item.shift]) {
-      groupedByShift[item.shift] = { laporan: 0, selesai: 0, kendala: 0 };
-    }
-    groupedByShift[item.shift].laporan += 1;
-    if (item.status === 'selesai') {
-      groupedByShift[item.shift].selesai += 1;
-    } else if (item.status === 'kendala') {
-      groupedByShift[item.shift].kendala += 1;
-    }
+  // Chart data — group by shift
+  const shiftMap: Record<string, { laporan: number; selesai: number; kendala: number }> = {};
+  rows.forEach((r) => {
+    if (!shiftMap[r.shift]) shiftMap[r.shift] = { laporan: 0, selesai: 0, kendala: 0 };
+    shiftMap[r.shift].laporan++;
+    if (r.status === 'selesai') shiftMap[r.shift].selesai++;
+    else if (r.status === 'kendala') shiftMap[r.shift].kendala++;
   });
+  const chartData = Object.entries(shiftMap).map(([shift, c]) => ({ shift, ...c }));
 
-  return Object.entries(groupedByShift).map(([shift, counts]) => ({
-    shift,
-    ...counts,
-  }));
-}
-
-/**
- * Get data untuk pie chart komposisi sampah
- */
-export async function getGarbagePieData(tanggal: string) {
-  const { data, error } = await supabase
-    .from('laporan')
-    .select('sampah_infeksius, sampah_anorganik, sampah_safety_box, sampah_kardus')
-    .eq('tanggal', tanggal);
-
-  if (error) {
-    console.error('Error fetching garbage pie:', error);
-    return {
-      infeksius: 0,
-      anorganik: 0,
-      safetyBox: 0,
-      kardus: 0,
-    };
-  }
-
-  const aggregate = data.reduce(
-    (acc, row) => ({
-      infeksius: acc.infeksius + row.sampah_infeksius,
-      anorganik: acc.anorganik + row.sampah_anorganik,
-      safetyBox: acc.safetyBox + row.sampah_safety_box,
-      kardus: acc.kardus + row.sampah_kardus,
-    }),
-    { infeksius: 0, anorganik: 0, safetyBox: 0, kardus: 0 }
-  );
-
-  return {
-    infeksius: parseFloat(aggregate.infeksius.toFixed(1)),
-    anorganik: parseFloat(aggregate.anorganik.toFixed(1)),
-    safetyBox: parseFloat(aggregate.safetyBox.toFixed(1)),
-    kardus: parseFloat(aggregate.kardus.toFixed(1)),
+  // Garbage pie — aggregate sampah
+  const garbage = {
+    infeksius: parseFloat(rows.reduce((s, r) => s + Number(r.sampah_infeksius), 0).toFixed(1)),
+    anorganik: parseFloat(rows.reduce((s, r) => s + Number(r.sampah_anorganik), 0).toFixed(1)),
+    safetyBox: parseFloat(rows.reduce((s, r) => s + Number(r.sampah_safety_box), 0).toFixed(1)),
+    kardus: parseFloat(rows.reduce((s, r) => s + Number(r.sampah_kardus), 0).toFixed(1)),
   };
+
+  return { rows, stats, chartData, garbage };
 }
 
 // ============================================
@@ -309,17 +225,10 @@ export interface StokBarangInsert {
  * Insert record stok barang baru
  */
 export async function insertStokBarang(data: StokBarangInsert) {
-  const { data: result, error } = await supabase
-    .from('stok_barang')
-    .insert([data])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error inserting stok barang:', error);
-    throw error;
-  }
-
+  const result = await safeQuery(
+    () => supabase.from('stok_barang').insert([data]).select().single(),
+    'insertStokBarang'
+  );
   return result;
 }
 
@@ -337,32 +246,21 @@ export async function fetchStokBarang(tanggal?: string) {
     query = query.eq('tanggal', tanggal);
   }
 
-  const { data, error } = await query;
-
-  if (error) {
-    console.error('Error fetching stok barang:', error);
-    throw error;
-  }
-
-  return data as StokBarangRow[];
+  const result = await safeQuery<StokBarangRow[]>(
+    () => query,
+    'fetchStokBarang'
+  );
+  return result;
 }
 
 /**
  * Update record stok barang
  */
 export async function updateStokBarang(id: string, data: Partial<StokBarangInsert>) {
-  const { data: result, error } = await supabase
-    .from('stok_barang')
-    .update(data)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error updating stok barang:', error);
-    throw error;
-  }
-
+  const result = await safeQuery(
+    () => supabase.from('stok_barang').update(data).eq('id', id).select().single(),
+    'updateStokBarang'
+  );
   return result;
 }
 
@@ -370,15 +268,10 @@ export async function updateStokBarang(id: string, data: Partial<StokBarangInser
  * Delete record stok barang
  */
 export async function deleteStokBarang(id: string) {
-  const { error } = await supabase
-    .from('stok_barang')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    console.error('Error deleting stok barang:', error);
-    throw error;
-  }
+  await safeQuery(
+    () => supabase.from('stok_barang').delete().eq('id', id).select(),
+    'deleteStokBarang'
+  );
 }
 
 /**

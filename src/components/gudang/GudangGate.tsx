@@ -3,14 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { Lock, Eye, EyeOff, Warehouse, Loader2 } from "lucide-react";
 
-const GUDANG_PASSWORD = "gudang2026";
-
 export default function GudangGate({ children }: { children: React.ReactNode }) {
     const [authenticated, setAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
     const [password, setPassword] = useState("");
     const [error, setError] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [loginLoading, setLoginLoading] = useState(false);
 
     useEffect(() => {
         const saved = sessionStorage.getItem("sikhaki_gudang_auth");
@@ -31,14 +30,31 @@ export default function GudangGate({ children }: { children: React.ReactNode }) 
         return () => window.removeEventListener("pageshow", handlePageShow);
     }, []);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (password === GUDANG_PASSWORD) {
-            setAuthenticated(true);
-            sessionStorage.setItem("sikhaki_gudang_auth", "true");
-            setError(false);
-        } else {
+        setLoginLoading(true);
+        setError(false);
+
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password, role: "gudang" }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                setAuthenticated(true);
+                sessionStorage.setItem("sikhaki_gudang_auth", "true");
+            } else {
+                setError(true);
+                setPassword("");
+            }
+        } catch {
             setError(true);
+        } finally {
+            setLoginLoading(false);
         }
     };
 
@@ -96,9 +112,17 @@ export default function GudangGate({ children }: { children: React.ReactNode }) 
 
                     <button
                         type="submit"
-                        className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold py-3 rounded-xl text-sm hover:opacity-90 transition-opacity shadow-lg shadow-amber-500/25"
+                        disabled={loginLoading}
+                        className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold py-3 rounded-xl text-sm hover:opacity-90 transition-opacity shadow-lg shadow-amber-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        Masuk
+                        {loginLoading ? (
+                            <>
+                                <Loader2 size={16} className="animate-spin" />
+                                Memverifikasi...
+                            </>
+                        ) : (
+                            "Masuk"
+                        )}
                     </button>
                 </form>
 

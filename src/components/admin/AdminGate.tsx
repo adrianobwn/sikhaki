@@ -4,14 +4,13 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Lock, Eye, EyeOff, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
 
-const ADMIN_PASSWORD = "rsui2026";
-
 export default function AdminGate({ children }: { children: React.ReactNode }) {
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
 
   useEffect(() => {
     const saved = sessionStorage.getItem("sikhaki_admin_auth");
@@ -32,16 +31,31 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("pageshow", handlePageShow);
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoginLoading(true);
 
-    if (password === ADMIN_PASSWORD) {
-      setAuthenticated(true);
-      sessionStorage.setItem("sikhaki_admin_auth", "true");
-    } else {
-      setError("Password salah. Hubungi supervisor untuk akses.");
-      setPassword("");
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, role: "admin" }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setAuthenticated(true);
+        sessionStorage.setItem("sikhaki_admin_auth", "true");
+      } else {
+        setError(data.error || "Password salah. Hubungi supervisor untuk akses.");
+        setPassword("");
+      }
+    } catch {
+      setError("Gagal menghubungi server. Coba lagi.");
+    } finally {
+      setLoginLoading(false);
     }
   };
 
@@ -69,6 +83,7 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
               src="/Logo-RSUI.png"
               alt="Logo RSUI"
               fill
+              sizes="64px"
               className="object-contain brightness-0 invert"
               priority
             />
@@ -117,11 +132,20 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
 
           <button
             type="submit"
-            disabled={!password}
+            disabled={!password || loginLoading}
             className="w-full bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-500/30 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-indigo-500/30"
           >
-            <ShieldCheck size={18} />
-            Masuk Dashboard
+            {loginLoading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Memverifikasi...
+              </>
+            ) : (
+              <>
+                <ShieldCheck size={18} />
+                Masuk Dashboard
+              </>
+            )}
           </button>
         </form>
 

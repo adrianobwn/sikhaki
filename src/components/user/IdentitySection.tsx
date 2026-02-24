@@ -44,7 +44,7 @@ export default function IdentitySection({ data, onChange }: IdentitySectionProps
           value={data.nama}
           onChange={(e) => handleNameChange(e.target.value)}
           placeholder="Masukkan nama..."
-          className="w-full border border-gray-300 rounded-lg p-3 text-sm font-semibold bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
+          className="w-full border border-gray-300 rounded-xl p-3.5 text-base font-semibold bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
         />
       </div>
 
@@ -57,7 +57,7 @@ export default function IdentitySection({ data, onChange }: IdentitySectionProps
           <select
             value={data.area}
             onChange={(e) => onChange({ ...data, area: e.target.value })}
-            className="w-full border border-gray-300 rounded-lg p-3 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-all shadow-sm"
+            className="w-full border border-gray-300 rounded-xl p-3.5 text-base font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-all shadow-sm"
           >
             <option value="">-- Pilih Area --</option>
             {AREAS.map((a) => (

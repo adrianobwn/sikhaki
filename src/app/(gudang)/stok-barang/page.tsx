@@ -69,10 +69,10 @@ export default function StokBarangPage() {
         setFormOpen(true);
     };
 
-    const handleExportExcel = () => {
+    const handleExportExcel = async () => {
         if (data.length === 0) return;
 
-        const XLSX = require("xlsx");
+        const XLSX = await import("xlsx");
 
         const rows = data.map((row, idx) => ({
             "No": idx + 1,
@@ -119,7 +119,7 @@ export default function StokBarangPage() {
                 }}
             />
 
-            <main className="max-w-7xl mx-auto p-6 space-y-6">
+            <main className="max-w-7xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
@@ -170,7 +170,7 @@ export default function StokBarangPage() {
                 <MonthlyStockChart data={chartData} />
 
                 {/* Action Bar */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-slate-200">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-4 border-t border-slate-200">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleAdd}

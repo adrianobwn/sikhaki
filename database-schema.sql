@@ -47,23 +47,34 @@ CREATE TABLE IF NOT EXISTS laporan (
   status TEXT NOT NULL DEFAULT 'selesai' CHECK (status IN ('selesai', 'kendala'))
 );
 
--- Index untuk performa query
+-- Index untuk performa query (single-column)
 CREATE INDEX IF NOT EXISTS idx_laporan_tanggal ON laporan(tanggal DESC);
 CREATE INDEX IF NOT EXISTS idx_laporan_shift ON laporan(shift);
 CREATE INDEX IF NOT EXISTS idx_laporan_area ON laporan(area_id);
 CREATE INDEX IF NOT EXISTS idx_laporan_petugas ON laporan(petugas);
 CREATE INDEX IF NOT EXISTS idx_laporan_status ON laporan(status);
 
+-- Composite indexes untuk query pattern dashboard
+CREATE INDEX IF NOT EXISTS idx_laporan_tanggal_shift ON laporan(tanggal DESC, shift);
+CREATE INDEX IF NOT EXISTS idx_laporan_tanggal_area ON laporan(tanggal DESC, area_id);
+CREATE INDEX IF NOT EXISTS idx_laporan_tanggal_status ON laporan(tanggal DESC, status);
+
 -- ============================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================
 ALTER TABLE laporan ENABLE ROW LEVEL SECURITY;
 
--- Policy: Siapa saja bisa insert (public access tanpa auth)
-CREATE POLICY "Allow public insert"
+-- Policy: Public bisa insert DENGAN validasi field wajib
+CREATE POLICY "Allow validated public insert"
 ON laporan FOR INSERT
 TO public
-WITH CHECK (true);
+WITH CHECK (
+  petugas IS NOT NULL AND length(petugas) >= 2
+  AND area_id BETWEEN 1 AND 23
+  AND area_nama IS NOT NULL
+  AND waktu IS NOT NULL
+  AND shift IS NOT NULL
+);
 
 -- Policy: Siapa saja bisa read (untuk dashboard admin)
 CREATE POLICY "Allow public read"
@@ -177,30 +188,41 @@ CREATE TABLE IF NOT EXISTS stok_barang (
   keterangan TEXT
 );
 
--- Indexes
+-- Indexes (single-column)
 CREATE INDEX IF NOT EXISTS idx_stok_barang_nama ON stok_barang(nama_barang);
 CREATE INDEX IF NOT EXISTS idx_stok_barang_tanggal ON stok_barang(tanggal DESC);
+
+-- Composite index untuk query pattern
+CREATE INDEX IF NOT EXISTS idx_stok_nama_tanggal ON stok_barang(nama_barang, tanggal DESC);
 
 -- RLS Policies
 ALTER TABLE stok_barang ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow public insert stok"
+-- Policy: Public bisa insert dengan validasi
+CREATE POLICY "Allow validated public insert stok"
 ON stok_barang FOR INSERT
 TO public
-WITH CHECK (true);
+WITH CHECK (
+  nama_barang IS NOT NULL AND length(nama_barang) >= 1
+  AND stok_awal >= 0
+  AND pengambilan >= 0
+);
 
+-- Policy: Public bisa read
 CREATE POLICY "Allow public read stok"
 ON stok_barang FOR SELECT
 TO public
 USING (true);
 
-CREATE POLICY "Allow public update stok"
+-- Policy: Hanya service_role (server-side) yang bisa update
+CREATE POLICY "Service role update stok"
 ON stok_barang FOR UPDATE
-TO public
+TO service_role
 USING (true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow public delete stok"
+-- Policy: Hanya service_role (server-side) yang bisa delete
+CREATE POLICY "Service role delete stok"
 ON stok_barang FOR DELETE
-TO public
+TO service_role
 USING (true);

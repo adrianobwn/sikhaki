@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useCallback, useEffect } from "react";
-import { Camera, RefreshCw, X } from "lucide-react";
+import { Camera, RefreshCw, X, SwitchCamera } from "lucide-react";
 
 interface CameraModuleProps {
   photo: string | null;
@@ -37,7 +37,6 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
     try {
       setError(null);
 
-      // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setError("Browser Anda tidak mendukung akses kamera. Gunakan browser modern seperti Chrome atau Safari.");
         return;
@@ -48,12 +47,10 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
         audio: false,
       });
       streamRef.current = stream;
-      // Set streaming first so video element renders, then useEffect attaches stream
       setStreaming(true);
     } catch (err) {
       console.error("Camera error:", err);
 
-      // Provide specific error messages
       if (err instanceof Error) {
         if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
           setError("Akses kamera ditolak. Klik ikon kunci/kamera di address bar browser, lalu izinkan akses kamera.");
@@ -61,6 +58,19 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
           setError("Kamera tidak ditemukan. Pastikan perangkat Anda memiliki kamera.");
         } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
           setError("Kamera sedang digunakan aplikasi lain. Tutup aplikasi yang menggunakan kamera, lalu coba lagi.");
+        } else if (err.name === "OverconstrainedError") {
+          // Fallback: jika kamera yang diminta tidak tersedia, coba tanpa facingMode
+          try {
+            const fallback = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false,
+            });
+            streamRef.current = fallback;
+            setStreaming(true);
+            return;
+          } catch {
+            setError("Kamera tidak dapat diakses. Coba refresh halaman.");
+          }
         } else {
           setError(`Error: ${err.message}. Coba refresh halaman atau gunakan browser lain.`);
         }
@@ -79,7 +89,6 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
     }
     setStreaming(false);
 
-    // Slight delay to ensure cleanup
     setTimeout(() => {
       startCamera(newMode);
     }, 100);
@@ -126,23 +135,38 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
         </div>
       )}
 
-      {/* STATE: Idle - Show start button */}
+      {/* STATE: Idle - Show start buttons */}
       {!streaming && !photo && (
-        <button
-          type="button"
-          onClick={() => startCamera()}
-          className="w-full border-2 border-dashed border-teal-300 bg-gradient-to-br from-teal-50 to-emerald-50 hover:from-teal-100 hover:to-emerald-100 rounded-2xl py-10 px-4 transition-all group active:scale-[0.98]"
-        >
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-teal-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/30 group-hover:scale-110 transition-transform">
-              <Camera size={32} />
+        <div className="space-y-3">
+          {/* Tombol utama buka kamera */}
+          <button
+            type="button"
+            onClick={() => startCamera()}
+            className="w-full border-2 border-dashed border-teal-300 bg-gradient-to-br from-teal-50 to-emerald-50 hover:from-teal-100 hover:to-emerald-100 rounded-2xl py-10 px-4 transition-all group active:scale-[0.98]"
+          >
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-teal-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/30 group-hover:scale-110 transition-transform">
+                <Camera size={32} />
+              </div>
+              <div className="text-center">
+                <span className="font-bold text-teal-900 text-lg block">Foto Absen Pulang</span>
+                <span className="text-sm text-teal-600">
+                  {facingMode === "user" ? "📷 Kamera Depan (Selfie)" : "📷 Kamera Belakang"}
+                </span>
+              </div>
             </div>
-            <div className="text-center">
-              <span className="font-bold text-teal-900 text-lg block">Foto Absen Pulang</span>
-              <span className="text-sm text-teal-600">Tap untuk buka kamera</span>
-            </div>
-          </div>
-        </button>
+          </button>
+
+          {/* Toggle kamera depan/belakang sebelum buka */}
+          <button
+            type="button"
+            onClick={() => setFacingMode(facingMode === "user" ? "environment" : "user")}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors active:scale-[0.98]"
+          >
+            <SwitchCamera size={16} />
+            {facingMode === "user" ? "Ganti ke Kamera Belakang" : "Ganti ke Kamera Depan (Selfie)"}
+          </button>
+        </div>
       )}
 
       {/* STATE: Streaming - Camera preview + CAPTURE BUTTON */}
@@ -158,21 +182,29 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
               className={`w-full aspect-[3/4] object-cover ${facingMode === "user" ? "transform -scale-x-100" : ""}`}
             />
 
-            {/* Camera Toggle Button */}
+            {/* Camera Toggle Button — dengan label */}
             <button
               type="button"
               onClick={toggleCamera}
-              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 backdrop-blur-sm transition-all active:scale-95"
+              className="absolute top-4 right-4 flex items-center gap-2 px-3 py-2 rounded-full bg-black/50 text-white hover:bg-black/70 backdrop-blur-sm transition-all active:scale-95"
             >
-              <RefreshCw size={20} />
+              <SwitchCamera size={18} />
+              <span className="text-xs font-semibold">
+                {facingMode === "user" ? "Belakang" : "Depan"}
+              </span>
             </button>
+
+            {/* Kamera mode indicator */}
+            <div className="absolute bottom-4 left-4 px-3 py-1.5 rounded-full bg-black/50 text-white text-xs font-semibold backdrop-blur-sm">
+              {facingMode === "user" ? "📷 Kamera Depan" : "📷 Kamera Belakang"}
+            </div>
           </div>
 
-          {/* Capture Button - OUTSIDE the video container so always visible */}
+          {/* Capture Button - besar untuk jempol */}
           <button
             type="button"
             onClick={capturePhoto}
-            className="w-full bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-red-500/30 active:scale-[0.97] transition-all text-lg"
+            className="w-full bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-5 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-red-500/30 active:scale-[0.97] transition-all text-lg"
           >
             <Camera size={24} />
             Ambil Foto Sekarang
@@ -190,7 +222,7 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
             <button
               type="button"
               onClick={retake}
-              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors"
+              className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors active:scale-90"
             >
               <X size={18} />
             </button>
@@ -204,7 +236,7 @@ export default function CameraModule({ photo, onCapture }: CameraModuleProps) {
           <button
             type="button"
             onClick={retake}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors active:scale-[0.98]"
           >
             <RefreshCw size={14} />
             Foto kurang jelas? Ambil ulang

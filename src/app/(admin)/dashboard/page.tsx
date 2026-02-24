@@ -10,8 +10,8 @@ import GarbagePieChart from "@/components/admin/GarbagePieChart";
 import DataTable from "@/components/admin/DataTable";
 import ReportDetailModal, { ReportDetail } from "@/components/admin/ReportDetailModal";
 import { Search, Calendar, Filter, Users, ClipboardList, CheckCircle2, Trash2, AlertTriangle, ChevronDown, LogOut, Download, Loader2, ArrowLeft } from "lucide-react";
-import { fetchLaporan, getDashboardStats, getActivityChartData, getGarbagePieData, type LaporanRow } from "@/lib/supabase";
-import * as XLSX from 'xlsx';
+import { getDashboardBundle, type LaporanRow } from "@/lib/supabase";
+import { useDebounce } from "@/hooks/useDebounce";
 
 function getFormattedDate(): string {
   const now = new Date();
@@ -69,6 +69,9 @@ export default function DashboardPage() {
     petugas: "",
   });
 
+  // Debounce filter agar tidak refetch setiap keystroke
+  const debouncedFilters = useDebounce(filters, 500);
+
   const [tableData, setTableData] = useState<ReportDetail[]>([]);
   const [chartData, setChartData] = useState<Array<{ shift: string; laporan: number; selesai: number; kendala: number }>>([]);
   const [stats, setStats] = useState({ totalLaporan: 0, areaSelesai: 0, totalSampah: 0, totalKendala: 0 });
@@ -78,22 +81,17 @@ export default function DashboardPage() {
   const [selectedReport, setSelectedReport] = useState<ReportDetail | null>(null);
   const [kendalaPopup, setKendalaPopup] = useState<string | null>(null);
 
-  // Fetch data from Supabase
+  // Fetch data dari Supabase — 1 query tunggal (sebelumnya 4 query terpisah)
   useEffect(() => {
     async function loadData() {
       setLoading(true);
       try {
-        const [reports, statsData, activityData, pieData] = await Promise.all([
-          fetchLaporan(filters),
-          getDashboardStats(filters.tanggal),
-          getActivityChartData(filters.tanggal),
-          getGarbagePieData(filters.tanggal),
-        ]);
+        const bundle = await getDashboardBundle(debouncedFilters);
 
-        setTableData(reports.map(convertToReportDetail));
-        setStats(statsData ?? { totalLaporan: 0, areaSelesai: 0, totalSampah: 0, totalKendala: 0 });
-        setChartData(activityData);
-        setGarbageData(pieData);
+        setTableData(bundle.rows.map(convertToReportDetail));
+        setStats(bundle.stats);
+        setChartData(bundle.chartData);
+        setGarbageData(bundle.garbage);
       } catch (error) {
         console.error("Error loading dashboard data:", error);
       } finally {
@@ -102,7 +100,7 @@ export default function DashboardPage() {
     }
 
     loadData();
-  }, [filters]);
+  }, [debouncedFilters]);
 
   useEffect(() => {
     if (kendalaPopup) {
@@ -130,11 +128,13 @@ export default function DashboardPage() {
     window.location.replace("/");
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (tableData.length === 0) {
       alert("Tidak ada data untuk diekspor");
       return;
     }
+
+    const XLSX = await import('xlsx');
 
     // Prepare data for Excel
     const excelData = tableData.map((r) => ({
@@ -209,13 +209,14 @@ export default function DashboardPage() {
     <div className="min-h-screen">
       {/* Admin Header - Indigo Theme */}
       <header className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 shadow-lg shadow-indigo-500/20 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 relative bg-white rounded-xl p-1 shadow-sm">
               <Image
                 src="/Logo-RSUI.png"
                 alt="Logo RSUI"
                 fill
+                sizes="40px"
                 className="object-contain p-0.5"
                 priority
               />
@@ -239,7 +240,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto p-6 space-y-6">
+      <main className="max-w-7xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="flex flex-col items-center gap-3">
@@ -273,7 +274,7 @@ export default function DashboardPage() {
             {/* Data Table Section with Filter inside */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
               {/* Table Header */}
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
+              <div className="px-4 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
                 <h3 className="text-sm font-bold uppercase tracking-wide text-slate-700 flex items-center gap-2">
                   <ClipboardList size={16} className="text-indigo-500" />
                   Riwayat Laporan
@@ -292,12 +293,12 @@ export default function DashboardPage() {
               </div>
 
               {/* Filter Bar inside table section */}
-              <div className="px-6 py-4 bg-slate-50/80 border-b border-slate-100">
+              <div className="px-4 sm:px-6 py-4 bg-slate-50/80 border-b border-slate-100">
                 <div className="flex items-center gap-2 mb-3">
                   <Filter size={14} className="text-indigo-500" />
                   <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Filter</h4>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
                   <div>
                     <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5">
                       <Calendar size={12} />
@@ -307,7 +308,7 @@ export default function DashboardPage() {
                       type="date"
                       value={filters.tanggal}
                       onChange={(e) => setFilters({ ...filters, tanggal: e.target.value })}
-                      className="w-full border border-slate-200 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow bg-white"
+                      className="w-full border border-slate-200 rounded-xl p-3 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow bg-white"
                     />
                   </div>
                   <div>
@@ -318,7 +319,7 @@ export default function DashboardPage() {
                     <select
                       value={filters.shift}
                       onChange={(e) => setFilters({ ...filters, shift: e.target.value })}
-                      className="w-full border border-slate-200 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
+                      className="w-full border border-slate-200 rounded-xl p-3 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
                     >
                       <option value="">Semua Shift</option>
                       {SHIFTS.map((s) => (
@@ -336,7 +337,7 @@ export default function DashboardPage() {
                     <select
                       value={filters.area}
                       onChange={(e) => setFilters({ ...filters, area: e.target.value })}
-                      className="w-full border border-slate-200 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
+                      className="w-full border border-slate-200 rounded-xl p-3 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
                     >
                       <option value="">Semua Area</option>
                       {AREAS.map((a) => (
@@ -346,7 +347,7 @@ export default function DashboardPage() {
                       ))}
                     </select>
                   </div>
-                  <div>
+                  <div className="sm:col-span-2 md:col-span-1">
                     <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5">
                       <Users size={12} />
                       Petugas
@@ -356,13 +357,13 @@ export default function DashboardPage() {
                       value={filters.petugas}
                       onChange={(e) => setFilters({ ...filters, petugas: e.target.value })}
                       placeholder="Cari nama..."
-                      className="w-full border border-slate-200 rounded-xl p-2.5 text-sm font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+                      className="w-full border border-slate-200 rounded-xl p-3 text-base font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
                     />
                   </div>
-                  <div>
+                  <div className="sm:col-span-2 md:col-span-1">
                     <button
                       onClick={handleSearch}
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl p-2.5 text-sm font-bold flex items-center justify-center gap-2 transition-colors shadow-sm shadow-indigo-500/20 active:scale-[0.98]"
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl p-3 text-base font-bold flex items-center justify-center gap-2 transition-colors shadow-sm shadow-indigo-500/20 active:scale-[0.98]"
                     >
                       <Search size={16} />
                       Cari

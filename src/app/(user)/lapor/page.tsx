@@ -169,6 +169,7 @@ export default function LaporPage() {
                 src="/Logo-RSUI.png"
                 alt="Logo RSUI"
                 fill
+                sizes="40px"
                 className="object-contain"
                 priority
               />
