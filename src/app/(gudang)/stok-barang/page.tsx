@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import {
     Package, Plus, Calendar, Search,
@@ -21,10 +21,24 @@ export default function StokBarangPage() {
     const [chartData, setChartData] = useState<Array<{ nama_barang: string; satuan: string; data: { tanggal: string; pengambilan: number }[] }>>([]);
     const [loading, setLoading] = useState(true);
     const [filterDate, setFilterDate] = useState("");
+    const [filterName, setFilterName] = useState("");
+    const [appliedFilterName, setAppliedFilterName] = useState("");
     const [formOpen, setFormOpen] = useState(false);
     const [editItem, setEditItem] = useState<StokBarangRow | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [deleting, setDeleting] = useState(false);
+
+    const filteredData = useMemo(() => {
+        if (!appliedFilterName.trim()) return data;
+        const lowerName = appliedFilterName.toLowerCase();
+        return data.filter(r => r.nama_barang.toLowerCase().includes(lowerName));
+    }, [data, appliedFilterName]);
+
+    const filteredChartData = useMemo(() => {
+        if (!appliedFilterName.trim()) return chartData;
+        const lowerName = appliedFilterName.toLowerCase();
+        return chartData.filter(c => c.nama_barang.toLowerCase().includes(lowerName));
+    }, [chartData, appliedFilterName]);
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -70,11 +84,11 @@ export default function StokBarangPage() {
     };
 
     const handleExportExcel = async () => {
-        if (data.length === 0) return;
+        if (filteredData.length === 0) return;
 
         const XLSX = await import("xlsx");
 
-        const rows = data.map((row, idx) => ({
+        const rows = filteredData.map((row, idx) => ({
             "No": idx + 1,
             "Nama Barang": row.nama_barang || "",
             "Satuan": row.satuan || "-",
@@ -195,6 +209,19 @@ export default function StokBarangPage() {
                     <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
                         <div className="flex-1 w-full sm:max-w-xs">
                             <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 mb-1.5">
+                                <Search size={12} />
+                                Cari Barang
+                            </label>
+                            <input
+                                type="text"
+                                value={filterName}
+                                onChange={(e) => setFilterName(e.target.value)}
+                                placeholder="Nama barang..."
+                                className="w-full border border-slate-200 rounded-xl p-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
+                            />
+                        </div>
+                        <div className="flex-1 w-full sm:max-w-xs">
+                            <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 mb-1.5">
                                 <Calendar size={12} />
                                 Filter Tanggal
                             </label>
@@ -207,15 +234,29 @@ export default function StokBarangPage() {
                         </div>
                         <div className="flex gap-2">
                             <button
-                                onClick={loadData}
+                                onClick={() => {
+                                    setAppliedFilterName(filterName);
+                                    loadData();
+                                }}
                                 className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-colors"
                             >
                                 <Search size={14} />
                                 Cari
                             </button>
-                            {filterDate && (
+                            {(filterDate || filterName || appliedFilterName) && (
                                 <button
-                                    onClick={() => setFilterDate("")}
+                                    onClick={() => {
+                                        setFilterDate("");
+                                        setFilterName("");
+                                        setAppliedFilterName("");
+                                        // Trigger a reload without date filter
+                                        // loadData is hooked to filterDate but won't catch immediate state,
+                                        // so we rely on useEffect catching filterDate change, or we just let it be.
+                                        // The easiest way is to let the useEffect trigger when filterDate changes, 
+                                        // but if filterDate was already "", it won't fetch.
+                                        // We can force a fetch by calling fetchStokBarang directly or just knowing
+                                        // that resetting appliedFilterName immediately restores the table.
+                                    }}
                                     className="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors"
                                 >
                                     Reset
@@ -234,11 +275,11 @@ export default function StokBarangPage() {
                                 <p className="text-sm text-slate-500 font-medium">Memuat data stok...</p>
                             </div>
                         </div>
-                    ) : data.length === 0 ? (
+                    ) : filteredData.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                             <Package size={40} strokeWidth={1.5} className="mb-3" />
                             <p className="text-sm font-semibold">Belum ada data stok</p>
-                            <p className="text-xs mt-1">Klik &quot;Tambah Stok&quot; untuk menambah data baru</p>
+                            {!filterName && <p className="text-xs mt-1">Klik &quot;Tambah Stok&quot; untuk menambah data baru</p>}
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
@@ -257,7 +298,7 @@ export default function StokBarangPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {data.map((row, idx) => {
+                                    {filteredData.map((row, idx) => {
                                         const stokSisa = row.stok_awal - row.pengambilan;
                                         const isLow = row.stok_awal > 0 && stokSisa / row.stok_awal <= 0.3;
                                         const isCritical = row.stok_awal > 0 && stokSisa / row.stok_awal <= 0.1;

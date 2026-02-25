@@ -132,16 +132,6 @@ export default function MonthlyStockChart({ data }: MonthlyStockChartProps) {
                                     }}
                                 />
                             </Bar>
-                            {/* Trend Line Curve */}
-                            <Line
-                                type="monotone"
-                                dataKey="total"
-                                stroke="#f59e0b"
-                                strokeWidth={2.5}
-                                strokeDasharray="5 5"
-                                dot={{ fill: "#f59e0b", r: 4, strokeWidth: 2, stroke: "#fff" }}
-                                activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2 }}
-                            />
                         </ComposedChart>
                     </ResponsiveContainer>
                 </div>

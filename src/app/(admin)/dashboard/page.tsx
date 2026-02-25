@@ -68,6 +68,7 @@ export default function DashboardPage() {
     area: "",
     petugas: "",
   });
+  const [petugasSearch, setPetugasSearch] = useState("");
 
   // Debounce filter agar tidak refetch setiap keystroke
   const debouncedFilters = useDebounce(filters, 500);
@@ -114,8 +115,9 @@ export default function DashboardPage() {
   }, [kendalaPopup]);
 
   const handleSearch = () => {
-    // Trigger re-fetch by updating filters (already handled by useEffect)
-    console.log("🔍 Filter:", filters);
+    // Terapkan petugasSearch ke filters agar efek debounce memicu fetch
+    setFilters((prev) => ({ ...prev, petugas: petugasSearch }));
+    console.log("🔍 Filter applied, searching petugas:", petugasSearch);
   };
 
   const handleView = (id: string) => {
@@ -354,14 +356,21 @@ export default function DashboardPage() {
                     </label>
                     <input
                       type="text"
-                      value={filters.petugas}
-                      onChange={(e) => setFilters({ ...filters, petugas: e.target.value })}
+                      value={petugasSearch}
+                      onChange={(e) => setPetugasSearch(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSearch();
+                        }
+                      }}
                       placeholder="Cari nama..."
                       className="w-full border border-slate-200 rounded-xl p-3 text-base font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
                     />
                   </div>
                   <div className="sm:col-span-2 md:col-span-1">
                     <button
+                      type="button"
                       onClick={handleSearch}
                       className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl p-3 text-base font-bold flex items-center justify-center gap-2 transition-colors shadow-sm shadow-indigo-500/20 active:scale-[0.98]"
                     >
