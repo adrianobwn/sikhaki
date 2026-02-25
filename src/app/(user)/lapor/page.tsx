@@ -9,8 +9,9 @@ import CleanlinessSection from "@/components/user/CleanlinessSection";
 import GarbageSection from "@/components/user/GarbageSection";
 import LogisticsSection from "@/components/user/LogisticsSection";
 import CameraModule from "@/components/user/CameraModule";
-import { User, Sparkles, Trash2, Package, CheckCircle2, AlertCircle, Camera, Loader2 } from "lucide-react";
-import { AREAS } from "@/constants/areas";
+import Link from "next/link";
+import { User, Sparkles, Trash2, Package, CheckCircle2, AlertCircle, Camera, Loader2, ChevronLeft } from "lucide-react";
+import { AREAS, SHIFTS } from "@/constants/areas";
 
 interface FormData {
   identity: { nama: string; area: string; shift: string };
@@ -135,6 +136,9 @@ export default function LaporPage() {
           >
             Buat Laporan Baru
           </Button>
+          <Link href="/" className="block mt-4 text-slate-500 hover:text-slate-700 text-sm font-medium">
+            Kembali ke Beranda
+          </Link>
         </div>
       </div>
     );
@@ -146,6 +150,9 @@ export default function LaporPage() {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <Link href="/" className="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center transition-colors">
+              <ChevronLeft size={20} className="text-slate-600" />
+            </Link>
             <div className="w-10 h-10 relative">
               <Image
                 src="/Logo-RSUI.png"

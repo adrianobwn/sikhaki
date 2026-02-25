@@ -2,8 +2,9 @@
 
 import React, { useMemo, useState } from "react";
 import {
-    BarChart,
+    ComposedChart,
     Bar,
+    Line,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -86,7 +87,7 @@ export default function MonthlyStockChart({ data }: MonthlyStockChartProps) {
             ) : (
                 <div className="h-[500px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
+                        <ComposedChart
                             layout="vertical"
                             data={chartData}
                             margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
@@ -131,7 +132,17 @@ export default function MonthlyStockChart({ data }: MonthlyStockChartProps) {
                                     }}
                                 />
                             </Bar>
-                        </BarChart>
+                            {/* Trend Line Curve */}
+                            <Line
+                                type="monotone"
+                                dataKey="total"
+                                stroke="#f59e0b"
+                                strokeWidth={2.5}
+                                strokeDasharray="5 5"
+                                dot={{ fill: "#f59e0b", r: 4, strokeWidth: 2, stroke: "#fff" }}
+                                activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2 }}
+                            />
+                        </ComposedChart>
                     </ResponsiveContainer>
                 </div>
             )}

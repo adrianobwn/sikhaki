@@ -41,9 +41,26 @@ function formatDateFull(dateStr: string) {
     return d.toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
 }
 
+function calculateTrend(data: { Pengambilan: number }[]) {
+    const n = data.length;
+    if (n <= 1) return data.map((d) => d.Pengambilan);
+
+    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+    for (let i = 0; i < n; i++) {
+        sumX += i;
+        sumY += data[i].Pengambilan;
+        sumXY += i * data[i].Pengambilan;
+        sumXX += i * i;
+    }
+
+    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX) || 0;
+    const intercept = (sumY - slope * sumX) / n || 0;
+
+    return data.map((_, i) => Math.max(0, slope * i + intercept));
+}
+
 export default function StockChart({ data }: StockChartProps) {
     const [selectedItem, setSelectedItem] = useState<{ item: StokTimeSeriesItem; color: string } | null>(null);
-    // Removed viewMode state, always "grid"
 
     useEffect(() => {
         if (selectedItem) {
@@ -84,9 +101,11 @@ export default function StockChart({ data }: StockChartProps) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {data.map((item, idx) => {
-                        const chartData = item.data.map((d) => ({
+                        const trendValues = calculateTrend(item.data.map(d => ({ Pengambilan: d.pengambilan })));
+                        const chartData = item.data.map((d, i) => ({
                             tanggal: formatDate(d.tanggal),
                             Pengambilan: d.pengambilan,
+                            Trend: Number(trendValues[i].toFixed(1)),
                         }));
                         const color = CHART_COLORS[idx % CHART_COLORS.length];
                         const totalPengambilan = item.data.reduce((s, d) => s + d.pengambilan, 0);
@@ -110,17 +129,27 @@ export default function StockChart({ data }: StockChartProps) {
                                             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                                             <XAxis dataKey="tanggal" tick={{ fontSize: 7, fill: "#94a3b8" }} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(chartData.length / 4) - 1)} />
                                             <YAxis tick={{ fontSize: 8, fill: "#cbd5e1" }} axisLine={false} tickLine={false} />
+                                            {/* Data Asli */}
                                             <Line
                                                 type="monotone"
                                                 dataKey="Pengambilan"
                                                 stroke={color}
                                                 strokeWidth={2}
-                                                strokeDasharray="5 3"
                                                 dot={{ r: 3, fill: color, strokeWidth: 0 }}
                                                 activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }}
                                             >
                                                 <LabelList dataKey="Pengambilan" position="top" style={{ fontSize: 8, fontWeight: 700, fill: color }} />
                                             </Line>
+                                            {/* Garis Trend */}
+                                            <Line
+                                                type="monotone"
+                                                dataKey="Trend"
+                                                stroke="#f59e0b"
+                                                strokeWidth={1.5}
+                                                strokeDasharray="4 4"
+                                                dot={false}
+                                                activeDot={false}
+                                            />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -164,10 +193,14 @@ export default function StockChart({ data }: StockChartProps) {
                             <div className="h-80 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart
-                                        data={selectedItem.item.data.map((d) => ({
-                                            tanggal: formatDate(d.tanggal),
-                                            Pengambilan: d.pengambilan,
-                                        }))}
+                                        data={(() => {
+                                            const trendValues = calculateTrend(selectedItem.item.data.map(d => ({ Pengambilan: d.pengambilan })));
+                                            return selectedItem.item.data.map((d, i) => ({
+                                                tanggal: formatDate(d.tanggal),
+                                                Pengambilan: d.pengambilan,
+                                                Trend: Number(trendValues[i].toFixed(1)),
+                                            }));
+                                        })()}
                                         margin={{ top: 25, right: 20, left: 0, bottom: 10 }}
                                     >
                                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
@@ -186,17 +219,28 @@ export default function StockChart({ data }: StockChartProps) {
                                             contentStyle={{ border: "none", borderRadius: 12, fontWeight: 600, fontSize: 13, boxShadow: "0 4px 12px rgb(0 0 0 / 0.15)" }}
                                             labelStyle={{ fontWeight: 700, marginBottom: 4 }}
                                         />
+                                        {/* Data Asli */}
                                         <Line
                                             type="monotone"
                                             dataKey="Pengambilan"
                                             stroke={selectedItem.color}
                                             strokeWidth={2.5}
-                                            strokeDasharray="6 3"
                                             dot={{ r: 5, fill: selectedItem.color, strokeWidth: 2, stroke: "#fff" }}
                                             activeDot={{ r: 8, strokeWidth: 3, stroke: "#fff" }}
                                         >
                                             <LabelList dataKey="Pengambilan" position="top" style={{ fontSize: 12, fontWeight: 700, fill: selectedItem.color }} />
                                         </Line>
+                                        {/* Garis Trend */}
+                                        <Line
+                                            type="monotone"
+                                            dataKey="Trend"
+                                            stroke="#f59e0b"
+                                            strokeWidth={2}
+                                            strokeDasharray="6 6"
+                                            dot={false}
+                                            activeDot={false}
+                                            name="Trend Garis"
+                                        />
                                     </LineChart>
                                 </ResponsiveContainer>
                             </div>
