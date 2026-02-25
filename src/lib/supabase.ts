@@ -1,15 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 import { safeQuery } from './error-handler';
 
-// Pastikan environment variables sudah di-set di .env.local
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// Environment variables — tersedia saat runtime (Vercel/local), mungkin kosong saat build
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables. Check .env.local file.');
+  console.warn('⚠️ Supabase environment variables belum di-set. Database tidak akan berfungsi.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder');
 
 // ============================================
 // TYPE DEFINITIONS
