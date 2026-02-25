@@ -120,6 +120,16 @@ export default function DashboardPage() {
     console.log("🔍 Filter applied, searching petugas:", petugasSearch);
   };
 
+  const handleReset = () => {
+    setFilters({
+      tanggal: "",
+      shift: "",
+      area: "",
+      petugas: "",
+    });
+    setPetugasSearch("");
+  };
+
   const handleView = (id: string) => {
     const report = tableData.find((r) => r.id === id);
     if (report) setSelectedReport(report);
@@ -368,15 +378,25 @@ export default function DashboardPage() {
                       className="w-full border border-slate-200 rounded-xl p-3 text-base font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
                     />
                   </div>
-                  <div className="sm:col-span-2 md:col-span-1">
+                  <div className="sm:col-span-2 md:col-span-1 flex gap-2">
                     <button
                       type="button"
                       onClick={handleSearch}
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl p-3 text-base font-bold flex items-center justify-center gap-2 transition-colors shadow-sm shadow-indigo-500/20 active:scale-[0.98]"
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl p-3 text-base font-bold flex items-center justify-center gap-2 transition-colors shadow-sm shadow-indigo-500/20 active:scale-[0.98]"
                     >
                       <Search size={16} />
                       Cari
                     </button>
+                    {(filters.tanggal || filters.shift || filters.area || filters.petugas || petugasSearch) && (
+                      <button
+                        type="button"
+                        onClick={handleReset}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl p-3 text-sm font-bold flex items-center justify-center transition-colors shadow-sm active:scale-[0.98]"
+                        title="Reset Filter"
+                      >
+                        Reset
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

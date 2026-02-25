@@ -140,9 +140,13 @@ export async function getDashboardBundle(filters: {
 }) {
   let query = supabase
     .from('laporan')
-    .select('id, waktu, tanggal, petugas, area_id, area_nama, shift, status, kendala, foto_url, sudah_dibersihkan, belum_dibersihkan, sampah_infeksius, sampah_anorganik, sampah_safety_box, sampah_kardus, logistik_kuning_90, logistik_kuning_60, logistik_kuning_40, logistik_hitam_90, logistik_hitam_60, logistik_hitam_40, logistik_ungu, logistik_coklat, logistik_safety_box, logistik_hand_towel, created_at')
-    .eq('tanggal', filters.tanggal)
-    .order('created_at', { ascending: false });
+    .select('id, waktu, tanggal, petugas, area_id, area_nama, shift, status, kendala, foto_url, sudah_dibersihkan, belum_dibersihkan, sampah_infeksius, sampah_anorganik, sampah_safety_box, sampah_kardus, logistik_kuning_90, logistik_kuning_60, logistik_kuning_40, logistik_hitam_90, logistik_hitam_60, logistik_hitam_40, logistik_ungu, logistik_coklat, logistik_safety_box, logistik_hand_towel, created_at');
+
+  if (filters.tanggal) {
+    query = query.eq('tanggal', filters.tanggal);
+  }
+
+  query = query.order('created_at', { ascending: false });
 
   if (filters.shift) query = query.eq('shift', filters.shift);
   if (filters.area) query = query.eq('area_id', parseInt(filters.area));
