@@ -1,18 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
-import { safeQuery } from './error-handler';
-
-// Environment variables — tersedia saat runtime (Vercel/local), mungkin kosong saat build
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('⚠️ Supabase environment variables belum di-set. Database tidak akan berfungsi.');
-}
-
-export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder');
+/**
+ * Client-side API Layer for SIKHAKI
+ *
+ * File ini di-import oleh komponen client ("use client").
+ * Semua fungsi memanggil API routes via fetch() — tidak langsung akses database.
+ *
+ * Mendukung dua backend tanpa perubahan di sisi client:
+ * - VPS (PostgreSQL) — API route pakai pg
+ * - Vercel (Supabase) — API route pakai Supabase SDK
+ */
 
 // ============================================
-// TYPE DEFINITIONS
+// TYPE DEFINITIONS (tidak berubah)
 // ============================================
 
 export interface LaporanInsert {
@@ -73,136 +71,7 @@ export interface LaporanRow {
 }
 
 // ============================================
-// DATABASE OPERATIONS
-// ============================================
-
-/**
- * Upload foto ke Supabase Storage
- * @param base64Data - Base64 data URL dari kamera
- * @param fileName - Nama file (otomatis generate jika tidak ada)
- * @returns Public URL foto atau null jika gagal
- */
-export async function uploadFoto(base64Data: string, fileName?: string): Promise<string | null> {
-  try {
-    // Convert base64 to Blob
-    const base64Response = await fetch(base64Data);
-    const blob = await base64Response.blob();
-
-    // Generate unique filename
-    const timestamp = Date.now();
-    const finalFileName = fileName || `absen-${timestamp}.jpg`;
-
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from('foto-absen')
-      .upload(finalFileName, blob, {
-        contentType: 'image/jpeg',
-        upsert: false,
-      });
-
-    if (error) {
-      console.error('Error uploading foto:', error);
-      return null;
-    }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('foto-absen')
-      .getPublicUrl(data.path);
-
-    return publicUrl;
-  } catch (error) {
-    console.error('Error in uploadFoto:', error);
-    return null;
-  }
-}
-
-/**
- * Insert laporan baru ke database
- */
-export async function insertLaporan(data: LaporanInsert) {
-  const result = await safeQuery(
-    () => supabase.from('laporan').insert([data]).select().single(),
-    'insertLaporan'
-  );
-  return result;
-}
-
-/**
- * Bundled dashboard data — menggabungkan 4 query terpisah menjadi 1.
- * Mengurangi round-trip ke database dari 4x menjadi 1x.
- */
-export async function getDashboardBundle(filters: {
-  tanggal: string;
-  shift?: string;
-  area?: string;
-  petugas?: string;
-}) {
-  let query = supabase
-    .from('laporan')
-    .select('id, waktu, tanggal, petugas, area_id, area_nama, shift, status, kendala, foto_url, sudah_dibersihkan, belum_dibersihkan, sampah_infeksius, sampah_anorganik, sampah_safety_box, sampah_kardus, logistik_kuning_90, logistik_kuning_60, logistik_kuning_40, logistik_hitam_90, logistik_hitam_60, logistik_hitam_40, logistik_ungu, logistik_coklat, logistik_safety_box, logistik_hand_towel, created_at');
-
-  if (filters.tanggal) {
-    query = query.eq('tanggal', filters.tanggal);
-  }
-
-  query = query.order('created_at', { ascending: false });
-
-  if (filters.shift) query = query.eq('shift', filters.shift);
-  if (filters.area) query = query.eq('area_id', parseInt(filters.area));
-  if (filters.petugas) query = query.ilike('petugas', `%${filters.petugas}%`);
-
-  const { data, error } = await query;
-  if (error) {
-    console.error('Error fetching dashboard bundle:', error);
-    throw error;
-  }
-
-  const rows = data as LaporanRow[];
-
-  // Stats — dihitung dari dataset yang sama
-  const stats = {
-    totalLaporan: rows.length,
-    areaSelesai: rows.filter((r) => r.status === 'selesai').length,
-    totalSampah: parseFloat(
-      rows
-        .reduce(
-          (s, r) =>
-            s +
-            Number(r.sampah_infeksius) +
-            Number(r.sampah_anorganik) +
-            Number(r.sampah_safety_box) +
-            Number(r.sampah_kardus),
-          0
-        )
-        .toFixed(1)
-    ),
-    totalKendala: rows.filter((r) => r.kendala).length,
-  };
-
-  // Chart data — group by shift
-  const shiftMap: Record<string, { laporan: number; selesai: number; kendala: number }> = {};
-  rows.forEach((r) => {
-    if (!shiftMap[r.shift]) shiftMap[r.shift] = { laporan: 0, selesai: 0, kendala: 0 };
-    shiftMap[r.shift].laporan++;
-    if (r.status === 'selesai') shiftMap[r.shift].selesai++;
-    else if (r.status === 'kendala') shiftMap[r.shift].kendala++;
-  });
-  const chartData = Object.entries(shiftMap).map(([shift, c]) => ({ shift, ...c }));
-
-  // Garbage pie — aggregate sampah
-  const garbage = {
-    infeksius: parseFloat(rows.reduce((s, r) => s + Number(r.sampah_infeksius), 0).toFixed(1)),
-    anorganik: parseFloat(rows.reduce((s, r) => s + Number(r.sampah_anorganik), 0).toFixed(1)),
-    safetyBox: parseFloat(rows.reduce((s, r) => s + Number(r.sampah_safety_box), 0).toFixed(1)),
-    kardus: parseFloat(rows.reduce((s, r) => s + Number(r.sampah_kardus), 0).toFixed(1)),
-  };
-
-  return { rows, stats, chartData, garbage };
-}
-
-// ============================================
-// STOK BARANG — TYPES & OPERATIONS
+// STOK BARANG — TYPES
 // ============================================
 
 export interface StokBarangRow {
@@ -225,101 +94,133 @@ export interface StokBarangInsert {
   keterangan?: string;
 }
 
-/**
- * Insert record stok barang baru
- */
-export async function insertStokBarang(data: StokBarangInsert) {
-  const result = await safeQuery(
-    () => supabase.from('stok_barang').insert([data]).select().single(),
-    'insertStokBarang'
-  );
-  return result;
-}
-
-/**
- * Fetch data stok barang, optional filter by tanggal
- */
-export async function fetchStokBarang(tanggal?: string) {
-  let query = supabase
-    .from('stok_barang')
-    .select('*')
-    .order('nama_barang', { ascending: true })
-    .order('tanggal', { ascending: false });
-
-  if (tanggal) {
-    query = query.eq('tanggal', tanggal);
-  }
-
-  const result = await safeQuery<StokBarangRow[]>(
-    () => query,
-    'fetchStokBarang'
-  );
-  return result;
-}
-
-/**
- * Update record stok barang
- */
-export async function updateStokBarang(id: string, data: Partial<StokBarangInsert>) {
-  const result = await safeQuery(
-    () => supabase.from('stok_barang').update(data).eq('id', id).select().single(),
-    'updateStokBarang'
-  );
-  return result;
-}
-
-/**
- * Delete record stok barang
- */
-export async function deleteStokBarang(id: string) {
-  await safeQuery(
-    () => supabase.from('stok_barang').delete().eq('id', id).select(),
-    'deleteStokBarang'
-  );
-}
-
-/**
- * Get time-series stok per nama barang (untuk grafik dashboard).
- * Mengembalikan array per barang, masing-masing berisi array data per tanggal.
- */
 export interface StokTimeSeriesItem {
   nama_barang: string;
   satuan: string;
   data: { tanggal: string; pengambilan: number }[];
 }
 
-export async function getStokTimeSeries(): Promise<StokTimeSeriesItem[]> {
-  const { data, error } = await supabase
-    .from('stok_barang')
-    .select('nama_barang, satuan, tanggal, pengambilan')
-    .order('tanggal', { ascending: true });
+// ============================================
+// CLIENT-SIDE API FUNCTIONS
+// Semua memanggil API routes via fetch()
+// ============================================
 
-  if (error) {
-    console.error('Error fetching stok time series:', error);
-    return [];
-  }
+/**
+ * Upload foto — sekarang ditangani langsung oleh /api/laporan saat submit.
+ * Fungsi ini dipertahankan untuk backward compatibility.
+ */
+export async function uploadFoto(_base64Data: string, _fileName?: string): Promise<string | null> {
+  // Upload foto sekarang dilakukan server-side di /api/laporan
+  return null;
+}
 
-  const rows = data as { nama_barang: string; satuan: string | null; tanggal: string; pengambilan: number }[];
-
-  // Group by nama_barang
-  const grouped: Record<string, { satuan: string; data: { tanggal: string; pengambilan: number }[] }> = {};
-
-  rows.forEach((row) => {
-    if (!grouped[row.nama_barang]) {
-      grouped[row.nama_barang] = {
-        satuan: row.satuan || '',
-        data: []
-      };
-    }
-    grouped[row.nama_barang].data.push({
-      tanggal: row.tanggal,
-      pengambilan: row.pengambilan,
-    });
+/**
+ * Insert laporan baru via API route
+ */
+export async function insertLaporan(data: LaporanInsert) {
+  const res = await fetch('/api/laporan', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
   });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Gagal menyimpan laporan');
+  }
+  return (await res.json()).data;
+}
 
-  return Object.entries(grouped).map(([nama, content]) => ({
-    nama_barang: nama,
-    satuan: content.satuan,
-    data: content.data,
-  }));
+/**
+ * Bundled dashboard data via API route
+ */
+export async function getDashboardBundle(filters: {
+  tanggal: string;
+  shift?: string;
+  area?: string;
+  petugas?: string;
+}) {
+  const params = new URLSearchParams();
+  if (filters.tanggal) params.set('tanggal', filters.tanggal);
+  if (filters.shift) params.set('shift', filters.shift);
+  if (filters.area) params.set('area', filters.area);
+  if (filters.petugas) params.set('petugas', filters.petugas);
+
+  const res = await fetch(`/api/dashboard?${params.toString()}`);
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Gagal mengambil data dashboard');
+  }
+  return (await res.json()) as {
+    rows: LaporanRow[];
+    stats: { totalLaporan: number; areaSelesai: number; totalSampah: number; totalKendala: number };
+    chartData: { shift: string; laporan: number; selesai: number; kendala: number }[];
+    garbage: { infeksius: number; anorganik: number; safetyBox: number; kardus: number };
+  };
+}
+
+/**
+ * Insert record stok barang baru
+ */
+export async function insertStokBarang(data: StokBarangInsert) {
+  const res = await fetch('/api/stok-barang', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Gagal menyimpan stok barang');
+  }
+  return (await res.json()) as StokBarangRow;
+}
+
+/**
+ * Fetch data stok barang, optional filter by tanggal
+ */
+export async function fetchStokBarang(tanggal?: string) {
+  const params = new URLSearchParams();
+  if (tanggal) params.set('tanggal', tanggal);
+
+  const res = await fetch(`/api/stok-barang?${params.toString()}`);
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Gagal mengambil data stok');
+  }
+  return (await res.json()) as StokBarangRow[];
+}
+
+/**
+ * Update record stok barang
+ */
+export async function updateStokBarang(id: string, data: Partial<StokBarangInsert>) {
+  const res = await fetch(`/api/stok-barang/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Gagal update stok barang');
+  }
+  return (await res.json()) as StokBarangRow;
+}
+
+/**
+ * Delete record stok barang
+ */
+export async function deleteStokBarang(id: string) {
+  const res = await fetch(`/api/stok-barang/${id}`, { method: 'DELETE' });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Gagal hapus stok barang');
+  }
+}
+
+/**
+ * Get time-series stok per nama barang (untuk grafik dashboard)
+ */
+export async function getStokTimeSeries(): Promise<StokTimeSeriesItem[]> {
+  const res = await fetch('/api/stok-barang/time-series');
+  if (!res.ok) return [];
+  return (await res.json()) as StokTimeSeriesItem[];
 }

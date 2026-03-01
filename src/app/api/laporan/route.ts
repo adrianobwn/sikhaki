@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { insertLaporan, uploadFoto, type LaporanInsert } from '@/lib/supabase';
+import { dbInsertLaporan, dbUploadFoto } from '@/lib/db';
+import { type LaporanInsert } from '@/lib/supabase';
 import { AREAS, SHIFTS } from '@/constants/areas';
 
 /**
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         // ============================
         let foto_url: string | null = null;
         if (foto_base64 && typeof foto_base64 === 'string' && foto_base64.startsWith('data:image')) {
-            foto_url = await uploadFoto(foto_base64);
+            foto_url = await dbUploadFoto(foto_base64);
         }
 
         // ============================
@@ -100,34 +100,7 @@ export async function POST(req: NextRequest) {
             foto_url: foto_url || undefined,
         };
 
-        // ============================
-        // INSERT KE DATABASE SECARA AMAN (BYPASS RLS)
-        // ============================
-        // Gunakan Service Role Key untuk bypass RLS (karena ini di server)
-        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        if (!serviceKey) {
-            console.error("Missing SUPABASE_SERVICE_ROLE_KEY in environment variables.");
-            return NextResponse.json(
-                { error: "Konfigurasi server tidak lengkap. Hubungi admin." },
-                { status: 500 }
-            );
-        }
-
-        const adminSupabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-            serviceKey
-        );
-
-        const { data: result, error: insertError } = await adminSupabase
-            .from('laporan')
-            .insert([laporanData])
-            .select()
-            .single();
-
-        if (insertError) {
-            console.error("Insert error in adminSupabase:", insertError);
-            throw new Error(insertError.message);
-        }
+        const result = await dbInsertLaporan(laporanData);
 
         return NextResponse.json({ success: true, data: result }, { status: 201 });
     } catch (err) {
