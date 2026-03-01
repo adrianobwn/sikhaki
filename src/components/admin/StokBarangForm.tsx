@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { X, Package, Save, Loader2 } from "lucide-react";
 import { STOK_BARANG_ITEMS } from "@/constants/stokBarang";
 import { insertStokBarang, updateStokBarang, type StokBarangRow } from "@/lib/supabase";
+import { getWIBDateString } from "@/lib/timezone";
 
 interface StokBarangFormProps {
     isOpen: boolean;
@@ -17,7 +18,7 @@ export default function StokBarangForm({ isOpen, onClose, onSuccess, editData }:
         nama_barang: "",
         stok_awal: 0,
         pengambilan: 0,
-        tanggal: new Date().toISOString().split("T")[0],
+        tanggal: getWIBDateString(),
         satuan: "",
         keterangan: "",
     });
@@ -39,7 +40,7 @@ export default function StokBarangForm({ isOpen, onClose, onSuccess, editData }:
                 nama_barang: "",
                 stok_awal: 0,
                 pengambilan: 0,
-                tanggal: new Date().toISOString().split("T")[0],
+                tanggal: getWIBDateString(),
                 satuan: "",
                 keterangan: "",
             });

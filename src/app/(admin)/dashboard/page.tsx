@@ -11,6 +11,7 @@ import DataTable from "@/components/admin/DataTable";
 import ReportDetailModal, { ReportDetail } from "@/components/admin/ReportDetailModal";
 import { Search, Calendar, Filter, Users, ClipboardList, CheckCircle2, Trash2, AlertTriangle, ChevronDown, LogOut, Download, Loader2, ArrowLeft } from "lucide-react";
 import { getDashboardBundle, type LaporanRow } from "@/lib/supabase";
+import { getWIBDateString } from "@/lib/timezone";
 import { useDebounce } from "@/hooks/useDebounce";
 
 function getFormattedDate(): string {
@@ -63,7 +64,7 @@ function convertToReportDetail(row: LaporanRow): ReportDetail {
 
 export default function DashboardPage() {
   const [filters, setFilters] = useState({
-    tanggal: new Date().toISOString().split("T")[0],
+    tanggal: getWIBDateString(),
     shift: "",
     area: "",
     petugas: "",

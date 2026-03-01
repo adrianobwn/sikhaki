@@ -12,6 +12,7 @@ import GudangNavbar from "@/components/gudang/GudangNavbar";
 import MonthlyStockChart from "@/components/gudang/MonthlyStockChart";
 import StokBarangForm from "@/components/admin/StokBarangForm";
 import { fetchStokBarang, deleteStokBarang, getStokTimeSeries, type StokBarangRow } from "@/lib/supabase";
+import { getWIBDateString } from "@/lib/timezone";
 import { Warehouse, TrendingUp } from "lucide-react";
 
 
@@ -113,7 +114,7 @@ export default function StokBarangPage() {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Stok Barang");
 
-        const dateStr = filterDate || new Date().toISOString().split("T")[0];
+        const dateStr = filterDate || getWIBDateString();
         XLSX.writeFile(wb, `stok-barang-${dateStr}.xlsx`);
     };
 
