@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dbInsertLaporan, dbUploadFoto } from '@/lib/db';
 import { type LaporanInsert } from '@/lib/supabase';
 import { AREAS, SHIFTS } from '@/constants/areas';
+import { getWIBTimeString, getWIBDateString } from '@/lib/timezone';
 
 /**
  * POST /api/laporan
@@ -74,8 +75,8 @@ export async function POST(req: NextRequest) {
         // INSERT KE DATABASE
         // ============================
         const laporanData: LaporanInsert = {
-            waktu: rest.waktu || new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-            tanggal: rest.tanggal || new Date().toISOString().split('T')[0],
+            waktu: rest.waktu || getWIBTimeString(),
+            tanggal: rest.tanggal || getWIBDateString(),
             petugas: petugas.trim(),
             area_id: Number(area_id),
             area_nama: areaValid.name,
