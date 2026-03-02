@@ -116,9 +116,12 @@ export default function DashboardPage() {
   }, [kendalaPopup]);
 
   const handleSearch = () => {
-    // Terapkan petugasSearch ke filters agar efek debounce memicu fetch
-    setFilters((prev) => ({ ...prev, petugas: petugasSearch }));
-    console.log("🔍 Filter applied, searching petugas:", petugasSearch);
+    // Saat search by nama, hapus filter tanggal agar cari di semua tanggal
+    setFilters((prev) => ({
+      ...prev,
+      petugas: petugasSearch,
+      tanggal: petugasSearch ? "" : prev.tanggal,
+    }));
   };
 
   const handleReset = () => {
