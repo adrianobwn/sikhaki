@@ -12,7 +12,7 @@ import ReportDetailModal, { ReportDetail } from "@/components/admin/ReportDetail
 import { Search, Calendar, Filter, Users, ClipboardList, CheckCircle2, Trash2, AlertTriangle, ChevronDown, LogOut, Download, Loader2, ArrowLeft } from "lucide-react";
 import { getDashboardBundle, type LaporanRow } from "@/lib/supabase";
 
-import { useDebounce } from "@/hooks/useDebounce";
+
 
 function getFormattedDate(): string {
   const now = new Date();
@@ -63,16 +63,21 @@ function convertToReportDetail(row: LaporanRow): ReportDetail {
 }
 
 export default function DashboardPage() {
+  // Applied filters — hanya berubah saat user klik "Cari"
   const [filters, setFilters] = useState({
     tanggal: "",
     shift: "",
     area: "",
     petugas: "",
   });
+  // Pending filters — nilai input sementara sebelum klik "Cari"
+  const [pendingFilters, setPendingFilters] = useState({
+    tanggal: "",
+    shift: "",
+    area: "",
+    petugas: "",
+  });
   const [petugasSearch, setPetugasSearch] = useState("");
-
-  // Debounce filter agar tidak refetch setiap keystroke
-  const debouncedFilters = useDebounce(filters, 500);
 
   const [tableData, setTableData] = useState<ReportDetail[]>([]);
   const [chartData, setChartData] = useState<Array<{ shift: string; laporan: number; selesai: number; kendala: number }>>([]);
@@ -88,7 +93,7 @@ export default function DashboardPage() {
     async function loadData() {
       setLoading(true);
       try {
-        const bundle = await getDashboardBundle(debouncedFilters);
+        const bundle = await getDashboardBundle(filters);
 
         setTableData(bundle.rows.map(convertToReportDetail));
         setStats(bundle.stats);
@@ -102,7 +107,7 @@ export default function DashboardPage() {
     }
 
     loadData();
-  }, [debouncedFilters]);
+  }, [filters]);
 
   useEffect(() => {
     if (kendalaPopup) {
@@ -117,20 +122,18 @@ export default function DashboardPage() {
 
   const handleSearch = () => {
     // Saat search by nama, hapus filter tanggal agar cari di semua tanggal
-    setFilters((prev) => ({
-      ...prev,
+    const applied = {
+      ...pendingFilters,
       petugas: petugasSearch,
-      tanggal: petugasSearch ? "" : prev.tanggal,
-    }));
+      tanggal: petugasSearch ? "" : pendingFilters.tanggal,
+    };
+    setFilters(applied);
   };
 
   const handleReset = () => {
-    setFilters({
-      tanggal: "",
-      shift: "",
-      area: "",
-      petugas: "",
-    });
+    const empty = { tanggal: "", shift: "", area: "", petugas: "" };
+    setFilters(empty);
+    setPendingFilters(empty);
     setPetugasSearch("");
   };
 
@@ -322,8 +325,8 @@ export default function DashboardPage() {
                     </label>
                     <input
                       type="date"
-                      value={filters.tanggal}
-                      onChange={(e) => setFilters({ ...filters, tanggal: e.target.value })}
+                      value={pendingFilters.tanggal}
+                      onChange={(e) => setPendingFilters({ ...pendingFilters, tanggal: e.target.value })}
                       className="w-full border border-slate-200 rounded-xl p-3 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow bg-white"
                     />
                   </div>
@@ -333,8 +336,8 @@ export default function DashboardPage() {
                       Shift
                     </label>
                     <select
-                      value={filters.shift}
-                      onChange={(e) => setFilters({ ...filters, shift: e.target.value })}
+                      value={pendingFilters.shift}
+                      onChange={(e) => setPendingFilters({ ...pendingFilters, shift: e.target.value })}
                       className="w-full border border-slate-200 rounded-xl p-3 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
                     >
                       <option value="">Semua Shift</option>
@@ -351,8 +354,8 @@ export default function DashboardPage() {
                       Area
                     </label>
                     <select
-                      value={filters.area}
-                      onChange={(e) => setFilters({ ...filters, area: e.target.value })}
+                      value={pendingFilters.area}
+                      onChange={(e) => setPendingFilters({ ...pendingFilters, area: e.target.value })}
                       className="w-full border border-slate-200 rounded-xl p-3 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
                     >
                       <option value="">Semua Area</option>
@@ -391,7 +394,7 @@ export default function DashboardPage() {
                       <Search size={16} />
                       Cari
                     </button>
-                    {(filters.tanggal || filters.shift || filters.area || filters.petugas || petugasSearch) && (
+                    {(pendingFilters.tanggal || pendingFilters.shift || pendingFilters.area || filters.tanggal || filters.shift || filters.area || filters.petugas || petugasSearch) && (
                       <button
                         type="button"
                         onClick={handleReset}

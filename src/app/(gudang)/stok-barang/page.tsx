@@ -22,6 +22,7 @@ export default function StokBarangPage() {
     const [chartData, setChartData] = useState<Array<{ nama_barang: string; satuan: string; data: { tanggal: string; pengambilan: number }[] }>>([]);
     const [loading, setLoading] = useState(true);
     const [filterDate, setFilterDate] = useState("");
+    const [appliedFilterDate, setAppliedFilterDate] = useState("");
     const [filterName, setFilterName] = useState("");
     const [appliedFilterName, setAppliedFilterName] = useState("");
     const [formOpen, setFormOpen] = useState(false);
@@ -45,7 +46,7 @@ export default function StokBarangPage() {
         setLoading(true);
         try {
             const [rows, timeSeries] = await Promise.all([
-                fetchStokBarang(filterDate || undefined),
+                fetchStokBarang(appliedFilterDate || undefined),
                 getStokTimeSeries()
             ]);
             setData(rows);
@@ -55,7 +56,7 @@ export default function StokBarangPage() {
         } finally {
             setLoading(false);
         }
-    }, [filterDate]);
+    }, [appliedFilterDate]);
 
     useEffect(() => {
         loadData();
@@ -237,7 +238,7 @@ export default function StokBarangPage() {
                             <button
                                 onClick={() => {
                                     setAppliedFilterName(filterName);
-                                    loadData();
+                                    setAppliedFilterDate(filterDate);
                                 }}
                                 className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-colors"
                             >
@@ -250,13 +251,7 @@ export default function StokBarangPage() {
                                         setFilterDate("");
                                         setFilterName("");
                                         setAppliedFilterName("");
-                                        // Trigger a reload without date filter
-                                        // loadData is hooked to filterDate but won't catch immediate state,
-                                        // so we rely on useEffect catching filterDate change, or we just let it be.
-                                        // The easiest way is to let the useEffect trigger when filterDate changes, 
-                                        // but if filterDate was already "", it won't fetch.
-                                        // We can force a fetch by calling fetchStokBarang directly or just knowing
-                                        // that resetting appliedFilterName immediately restores the table.
+                                        setAppliedFilterDate("");
                                     }}
                                     className="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors"
                                 >
